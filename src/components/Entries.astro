@@ -13,6 +13,7 @@ const getValenceColor = (valence: "Good" | "Bad") => {
       <div class="flex gap-2 items-center">
         SORT
         <select id="sort" class="truncate w-24 bg-white border-black p-1 rounded-md">
+          <option> Default </option>
           <option> P(true) </option>
           <option> big | true </option>
           <option> big & true </option>
@@ -21,8 +22,8 @@ const getValenceColor = (valence: "Good" | "Bad") => {
       <div class="flex gap-2 items-center">
         FILTER
         <select id="filter" class="truncate w-24 bg-white border-black p-1 rounded-md">
+          <option value="all">No filter</option>
           <option disabled> Category </option>
-          <option value="all">All</option>
           {categories.map((c) => <option value={c}>{c}</option>)}
           <hr />
           <option disabled> Valence </option>
@@ -44,89 +45,84 @@ const getValenceColor = (valence: "Good" | "Bad") => {
     {
       events &&
         events.length > 0 &&
-        events
-          .sort((a, b) => b["P(generalises)"] - a["P(generalises)"])
-          .map((item) => (
-            <div
-              class="entry"
-              data-category={item.category}
-              data-valence={item.valence}
-              data-evidence={item.evidence}
-              data-prob={item["P(generalises)"]}
-              data-scale={item["big | true"]}
-            >
-              <div class="probs">
-                <div
-                  class="probs-true"
-                  style={{
-                    width: `${item["P(generalises)"] * 100}%`,
-                    border: "solid 1px " + getValenceColor(item.valence),
-                    "border-right": "none",
-                    "--stripe-color": getValenceColor(item.valence),
-                  }}
-                />
-              </div>
+        events.map((item) => (
+          <div
+            class="entry"
+            data-category={item.category}
+            data-valence={item.valence}
+            data-evidence={item.evidence}
+            data-prob={item["P(generalises)"]}
+            data-scale={item["big | true"]}
+          >
+            <div class="probs">
+              <div
+                class="probs-true"
+                style={{
+                  width: `${item["P(generalises)"] * 100}%`,
+                  border: "solid 1px " + getValenceColor(item.valence),
+                  "border-right": "none",
+                  "--stripe-color": getValenceColor(item.valence),
+                }}
+              />
+            </div>
 
-              <div class="content">
-                <h3>{item.summary}</h3>
-                <details>
-                  <summary>+</summary>
-                  <div class="text-sm pt-1 text-stone-400">
-                    {item.commentary && <div class="pb-3">{item.commentary}</div>}
-                    <div class="flex gap-x-5 gap-y-0 flex-wrap">
-                      <div>
-                        {" "}
-                        P(true) = <span class="text-black">{item["P(generalises)"]}</span>{" "}
-                      </div>
-                      <div>
-                        {" "}
-                        Big | True = <span class="text-black">{item["big | true"]}</span>{" "}
-                      </div>
-                      <div>
-                        {" "}
-                        Big * P(true) = <span class="text-black">{item["big & true"]}</span>{" "}
-                      </div>
+            <div class="content">
+              <h3>{item.summary}</h3>
+              <details>
+                <summary>+</summary>
+                <div class="text-sm pt-1 text-stone-500">
+                  {item.commentary && <div class="pb-3">{item.commentary}</div>}
+                  <div class="flex gap-x-5 gap-y-0 flex-wrap">
+                    <div>
+                      P(true) = <span class="text-black">{item["P(generalises)"]}</span>
+                    </div>
+                    <div>
+                      Big | True = <span class="text-black">{item["big | true"]}</span>
+                    </div>
+                    <div>
+                      Big * P(true) = <span class="text-black">{item["big & true"]}</span>
                     </div>
                   </div>
-                </details>
-              </div>
-
-              <div class="categories">
-                <div>{item.category}</div>
-                <div>{item.subcategory}</div>
-                <div>{item.subsub}</div>
-              </div>
-
-              <div class="links">
-                {item.evidence && (
-                  <div>
-                    {item.evidence == "Speculation"
-                      ? "❓ "
-                      : item.evidence == "Established fact"
-                        ? "❗️ "
-                        : item.evidence == "Demo"
-                          ? "🛠️ "
-                          : item.evidence == "RCT"
-                            ? "🧪 "
-                            : item.evidence == "Real-world evidence"
-                              ? "📈 "
-                              : ""}
-                    {item.evidence}
-                  </div>
-                )}
-                {item.primary_source && (
-                  <a href={item.primary_source} class="pill">
-                    ○ Primary source
-                  </a>
-                )}
-                {item.other_sources && (
-                  <a href={item.other_sources} class="pill">
-                    ○ Secondary source
-                  </a>
-                )}
-              </div>
+                </div>
+              </details>
             </div>
-          ))
+
+            <div class="categories">
+              <div>{item.category}</div>
+              <div>{item.subcategory}</div>
+              <div>{item.subsub}</div>
+            </div>
+
+            <div class="links">
+              {item.evidence && (
+                <div>
+                  {item.evidence == "Speculation"
+                    ? "❓ "
+                    : item.evidence == "Established fact"
+                      ? "❗️ "
+                      : item.evidence == "Demo"
+                        ? "🛠️ "
+                        : item.evidence == "RCT"
+                          ? "🧪 "
+                          : item.evidence == "Real-world evidence"
+                            ? "📈 "
+                            : ""}
+                  {item.evidence}
+                </div>
+              )}
+              {item.primary_source && (
+                <a href={item.primary_source} class="pill">
+                  ○ Primary source
+                </a>
+              )}
+              {item.other_sources && (
+                <a href={item.other_sources} class="pill">
+                  ○ Secondary source
+                </a>
+              )}
+            </div>
+          </div>
+        ))
     }
   </div>
 </section>
