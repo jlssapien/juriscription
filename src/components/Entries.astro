@@ -4,7 +4,8 @@ const categories = [...new Set(events.map((e) => e.category))];
 const getValenceColor = (valence: "Good" | "Bad") => {
   if (valence === "Good") return "green";
   if (valence === "Bad") return "#C7262C";
-  if (valence === "?") return "#A6A09C";
+
+  return "#A6A09C";
 };
 ---
 
