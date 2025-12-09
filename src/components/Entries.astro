@@ -1,0 +1,230 @@
+---
+import events from "../content/2025.json";
+const getValenceColor = (valence: "Good" | "Bad") => {
+  if (valence === "Good") return "green";
+  if (valence === "Bad") return "#C7262C";
+};
+---
+
+<section class="entries">
+  <div class="filters">
+    <div>
+      Sort by: <select> </select>
+    </div>
+    <div>
+      Filter: <select> Null </select>
+    </div>
+  </div>
+  {
+    events &&
+      events.length > 0 &&
+      events.map((item) => (
+        <div class="entry">
+          <div class="probs">
+            <div
+              class="probs-true"
+              style={{
+                width: `${item["P(generalises)"] * 100}%`,
+                border: "solid 1px " + getValenceColor(item.valence),
+                "border-right": "none",
+                "--stripe-color": getValenceColor(item.valence),
+              }}
+            />
+          </div>
+
+          <div class="content">
+            <h3>{item.summary}</h3>
+            {item.commentary && (
+              <details>
+                <summary>+</summary>
+                <div>{item.commentary}</div>
+              </details>
+            )}
+          </div>
+
+          <div class="categories">
+            <div>{item.category}</div>
+            <div>{item.subcategory}</div>
+            <div>{item.subsub}</div>
+          </div>
+
+          <div class="links">
+            {item.evidence && (
+              <div>
+                {item.evidence == "Speculation"
+                  ? "❔"
+                  : item.evidence == "Established fact"
+                    ? "❗️"
+                    : item.evidence == "Demo"
+                      ? "🛠️"
+                      : item.evidence == "RCT"
+                        ? "🧪"
+                        : item.evidence == "Real-world evidence"
+                          ? "📈"
+                          : ""}
+                {item.evidence}
+              </div>
+            )}
+            {item.primary_source && (
+              <a href={item.primary_source} class="pill">
+                ○ PRIMARY SOURCE
+              </a>
+            )}
+            {item.other_sources && (
+              <a href={item.other_sources} class="pill">
+                ○ SECONDARY SOURCE
+              </a>
+            )}
+          </div>
+        </div>
+      ))
+  }
+</section>
+
+<style>
+  .entries {
+    margin-left: calc(20rem + 100px);
+    margin-top: 2rem;
+    padding-bottom: 2rem;
+    width: calc(100% - 20rem - 100px);
+  }
+
+  .filters {
+    display: flex;
+    padding: 12px 16px;
+    gap: 2em;
+    width: fit-content;
+    justify-content: end;
+    text-transform: uppercase;
+    position: sticky;
+    margin-left: 80%;
+    top: 0;
+    z-index: 10;
+    background: var(--color-grey);
+  }
+
+  .entry {
+    background: white;
+    border-bottom: solid 0.5px #ccc;
+    border-left: solid 0.5px #ccc;
+    padding: 1.2rem 1.5rem;
+    display: flex;
+    gap: 48px;
+    position: relative;
+    min-height: 8rem;
+  }
+
+  .entry .content {
+    width: 65%;
+    flex-grow: 0;
+  }
+
+  .categories {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 14px;
+    width: 10rem;
+    flex-shrink: 0;
+    font-family: monospace;
+    font-size: 0.8em;
+    text-transform: uppercase;
+  }
+
+  .entry details div {
+    font-size: 0.92rem;
+    line-height: 1.5em;
+    padding-top: 0.5rem;
+  }
+
+  .links {
+    width: 11rem;
+    flex-shrink: 0;
+    display: grid;
+    gap: 14px;
+    height: fit-content;
+    font-family: monospace;
+    font-size: 0.8em;
+    text-transform: uppercase;
+  }
+
+  .pill {
+    /*background: #eee;*/
+    width: fit-content;
+    color: var(--color-theme);
+    /*border: solid 1px #ff804f;*/
+  }
+
+  .probs {
+    position: absolute;
+    left: -100.5px;
+    top: 22px;
+    width: 100px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .probs-true {
+    height: 16px;
+    background-image: linear-gradient(
+      45deg,
+      var(--stripe-color) 25%,
+      transparent 25%,
+      transparent 50%,
+      var(--stripe-color) 50%,
+      var(--stripe-color) 75%,
+      transparent 75%,
+      transparent
+    );
+    background-size: 4px 4px;
+  }
+
+  .entry h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0px;
+  }
+
+  @media (max-width: 1024px) {
+    .entries {
+      padding-left: 100px;
+      margin-left: 0px;
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 650px) {
+    .entries {
+      margin-left: 0px;
+      width: 100%;
+      padding-left: 50px;
+    }
+
+    .entry {
+      border-left: none;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+
+    .entry .content {
+      width: 100%;
+    }
+
+    .categories {
+      width: 100%;
+      flex-direction: row;
+      gap: 0.5rem 1rem;
+      flex-wrap: wrap;
+    }
+
+    .links {
+      width: 100%;
+    }
+
+    .probs {
+      width: 50px;
+      left: -50.5px;
+    }
+  }
+</style>

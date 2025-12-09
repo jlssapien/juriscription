@@ -1,0 +1,5 @@
+# the frontier
+
+[] Sorting
+[] Filtering
+[]

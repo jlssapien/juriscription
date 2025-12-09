@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+@theme {
+  --spacing: 4px;
+  --base-font-size: 16px;
+  --bottom: calc(1.1 * var(--base-font-size));
+  --color-theme: #ff804f;
+  --color-black: #131318;
+  --color-grey: #ebebeb;
+  --font-sans: Plain, ui-sans-serif, system-ui;
+  --font-serif: Tobias, ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
+  --font-mono: IBM, monospace;
+}
+
+@font-face {
+  font-family: "Tobias";
+  src: url("/Tobias.woff2");
+  font-weight: 1 999;
+}
+
+@font-face {
+  font-family: "Plain";
+  src: url("/Plain.woff2");
+  font-weight: 1 999;
+}
+
+@font-face {
+  font-family: "IBM";
+  src: url("/IBM.otf");
+  font-weight: 400;
+}
+
+body {
+  font-size: var(--base-font-size);
+  font-family: var(--font-sans);
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5 {
+  overflow-wrap: break-word;
+  margin: 1em 0em var(--bottom) 0em;
+}
+
+p,
+h6,
+blockquote,
+pre {
+  margin: 0em 0em var(--bottom) 0em;
+}
+
+* > *:first-child {
+  margin-top: 0px;
+}
+
+p:last-child,
+blockquote:last-child,
+ul:last-child,
+ol:last-child,
+pre:last-child {
+  margin-bottom: 0px;
+}
+
+h1 {
+  font-size: 2.625em;
+  line-height: 1.2em;
+  font-family: var(--font-serif);
+}
+
+h2 {
+  font-size: 2.0625em;
+  line-height: 1.2em;
+}
+
+h3 {
+  font-size: 1.625em;
+  line-height: 1.4em;
+  font-family: var(--font-serif);
+  font-weight: 800;
+}
+
+h4 {
+  font-size: 1.25em;
+}
+
+h5 {
+  font-size: 0.8125em;
+}
+
+a {
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+
+ol,
+ul {
+  padding-left: 1.5em;
+  margin-bottom: var(--bottom);
+}
+
+ol li,
+ul li {
+  margin: 0.75em 0em;
+}
+
+ul li {
+  list-style-type: disc;
+}
+
+ol li {
+  list-style-type: decimal;
+}
+
+li::marker {
+  color: var(--color-theme);
+}
+
+blockquote {
+  padding: var(--bottom);
+  background-color: #eeeeee;
+  border-radius: 8px;
+}
+
+cite {
+  display: block;
+}
+
+details summary {
+  touch-action: manipulation;
+  color: var(--color-theme);
+  user-select: none;
+}
+
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
