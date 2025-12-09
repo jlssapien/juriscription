@@ -4,6 +4,7 @@ const categories = [...new Set(events.map((e) => e.category))];
 const getValenceColor = (valence: "Good" | "Bad") => {
   if (valence === "Good") return "green";
   if (valence === "Bad") return "#C7262C";
+  if (valence === "?") return "#A6A09C";
 };
 ---
 
@@ -13,7 +14,6 @@ const getValenceColor = (valence: "Good" | "Bad") => {
       <div class="flex gap-2 items-center">
         SORT
         <select id="sort" class="truncate w-32 bg-white border-black p-1 rounded-md">
-          <option value="default">Default</option>
           <option value="prob">P(Generalises)</option>
           <option value="big">Big if True</option>
           <option value="ev">Expected Value (Big * P)</option>
@@ -24,17 +24,6 @@ const getValenceColor = (valence: "Good" | "Bad") => {
         <select id="filter" class="truncate w-32 bg-white border-black p-1 rounded-md">
           <option value="all">Everything</option>
           {categories.map((c) => <option value={c}>{c}</option>)}
-          <!-- <hr />
-          <option disabled> Valence </option>
-          <option> Good </option>
-          <option> Bad </option>
-          <hr />
-          <option disabled> Evidence type </option>
-          <option> Demo </option>
-          <option> RCT </option>
-          <option> Real-world evidence </option>
-          <option> Speculation </option>
-          <option> Established fact </option> -->
         </select>
       </div>
     </div>
@@ -44,14 +33,16 @@ const getValenceColor = (valence: "Good" | "Bad") => {
     {
       events &&
         events.length > 0 &&
-        events.map((item) => (
+        events.map((item, index) => (
           <div
             class="entry"
+            data-index={index}
             data-category={item.category}
             data-valence={item.valence}
             data-evidence={item.evidence}
             data-prob={item["P(generalises)"]}
-            data-scale={item["big | true"]}
+            data-big={item["big | true"]}
+            data-ev={item["big & true"]}
           >
             <div class="probs">
               <div
@@ -140,15 +131,14 @@ const getValenceColor = (valence: "Good" | "Bad") => {
     // 1. Create a copy of the array to sort
     let items = [...originalItems];
 
-    // 2. Sort Logic
     if (sortValue !== "default") {
       items.sort((a, b) => {
         let valA = 0,
           valB = 0;
 
         if (sortValue === "prob") {
-          valA = parseFloat(a.dataset.p || "0");
-          valB = parseFloat(b.dataset.p || "0");
+          valA = parseFloat(a.dataset.prob || "0");
+          valB = parseFloat(b.dataset.prob || "0");
         } else if (sortValue === "big") {
           valA = parseFloat(a.dataset.big || "0");
           valB = parseFloat(b.dataset.big || "0");
@@ -156,37 +146,23 @@ const getValenceColor = (valence: "Good" | "Bad") => {
           valA = parseFloat(a.dataset.ev || "0");
           valB = parseFloat(b.dataset.ev || "0");
         }
-        return valB - valA; // Descending order
+        return valB - valA;
       });
     } else {
-      // Restore default order using the index we saved
       items.sort((a, b) => {
-        return parseInt(a.dataset.index) - parseInt(b.dataset.index);
+        return parseInt(a.dataset.index || "0") - parseInt(b.dataset.index || "0");
       });
     }
 
-    // 3. Filter Logic & DOM Manipulation
-    // We detach everything and re-append in the new order
     listWrapper.innerHTML = "";
 
     items.forEach((item) => {
       const category = item.dataset.category;
 
-      // Check if item matches filter
       if (filterValue === "all" || category === filterValue) {
         item.style.display = "flex"; // Ensure it's visible
         listWrapper.appendChild(item);
       } else {
-        // Option A: Hide it using CSS (keeps it in DOM, good for transitions)
-        // item.style.display = "none";
-        // listWrapper.appendChild(item);
-
-        // Option B: Don't append it (cleaner DOM, faster for huge lists)
-        // We will stick to Option A logic roughly, but since we cleared innerHTML
-        // we strictly only append what matches if we want a "hard" filter,
-        // OR we append everything and hide the non-matches.
-        // Let's append everything but hide non-matches to keep the Sort logic simple.
-
         item.style.display = "none";
         listWrapper.appendChild(item);
       }
