@@ -9,23 +9,22 @@ const getValenceColor = (valence: "Good" | "Bad") => {
 
 <section class="entries">
   <div class="flex justify-end pointer-events-none w-full">
-    <div class="flex gap-6 w-fit bg-grey pointer-events-auto p-4 text-sm text-stone-500">
+    <div class="flex gap-5 w-fit bg-grey pointer-events-auto p-4 px-3 text-sm text-stone-500">
       <div class="flex gap-2 items-center">
         SORT
-        <select id="sort" class="truncate w-24 bg-white border-black p-1 rounded-md">
-          <option> Default </option>
-          <option> P(true) </option>
-          <option> big | true </option>
-          <option> big & true </option>
+        <select id="sort" class="truncate w-32 bg-white border-black p-1 rounded-md">
+          <option value="default">Default</option>
+          <option value="prob">P(Generalises)</option>
+          <option value="big">Big if True</option>
+          <option value="ev">Expected Value (Big * P)</option>
         </select>
       </div>
       <div class="flex gap-2 items-center">
-        FILTER
-        <select id="filter" class="truncate w-24 bg-white border-black p-1 rounded-md">
-          <option value="all">No filter</option>
-          <option disabled> Category </option>
+        CATEGORY
+        <select id="filter" class="truncate w-32 bg-white border-black p-1 rounded-md">
+          <option value="all">Everything</option>
           {categories.map((c) => <option value={c}>{c}</option>)}
-          <hr />
+          <!-- <hr />
           <option disabled> Valence </option>
           <option> Good </option>
           <option> Bad </option>
@@ -35,13 +34,13 @@ const getValenceColor = (valence: "Good" | "Bad") => {
           <option> RCT </option>
           <option> Real-world evidence </option>
           <option> Speculation </option>
-          <option> Established fact </option>
+          <option> Established fact </option> -->
         </select>
       </div>
     </div>
   </div>
 
-  <div class="list-wrapper">
+  <div id="list-wrapper">
     {
       events &&
         events.length > 0 &&
@@ -131,41 +130,72 @@ const getValenceColor = (valence: "Good" | "Bad") => {
   const filterSelect = document.getElementById("filter");
   const sortSelect = document.getElementById("sort");
   const listWrapper = document.getElementById("list-wrapper");
-  // Store original order for reset
-  const originalOrder = Array.from(listWrapper.children);
 
-  filterSelect.addEventListener("change", (e) => {
-    const category = e.target.value;
-    const entries = document.querySelectorAll(".entry");
+  const originalItems = Array.from(listWrapper.children) as HTMLElement[];
 
-    entries.forEach((entry) => {
-      if (category === "all" || entry.dataset.category === category) {
-        entry.style.display = "flex"; // or whatever your display is
-      } else {
-        entry.style.display = "none";
-      }
-    });
-  });
+  function updateList() {
+    const sortValue = sortSelect.value;
+    const filterValue = filterSelect.value;
 
-  // 2. Handle Sorting (The annoying part in Vanilla JS)
-  sortSelect.addEventListener("change", (e) => {
-    const method = e.target.value;
-    const entries = Array.from(listWrapper.children);
+    // 1. Create a copy of the array to sort
+    let items = [...originalItems];
 
-    let sortedEntries;
+    // 2. Sort Logic
+    if (sortValue !== "default") {
+      items.sort((a, b) => {
+        let valA = 0,
+          valB = 0;
 
-    if (method === "default") {
-      sortedEntries = originalOrder; // Reset to DOM order
-    } else if (method === "prob_desc") {
-      sortedEntries = entries.sort((a, b) => {
-        return parseFloat(b.dataset.prob) - parseFloat(a.dataset.prob);
+        if (sortValue === "prob") {
+          valA = parseFloat(a.dataset.p || "0");
+          valB = parseFloat(b.dataset.p || "0");
+        } else if (sortValue === "big") {
+          valA = parseFloat(a.dataset.big || "0");
+          valB = parseFloat(b.dataset.big || "0");
+        } else if (sortValue === "ev") {
+          valA = parseFloat(a.dataset.ev || "0");
+          valB = parseFloat(b.dataset.ev || "0");
+        }
+        return valB - valA; // Descending order
+      });
+    } else {
+      // Restore default order using the index we saved
+      items.sort((a, b) => {
+        return parseInt(a.dataset.index) - parseInt(b.dataset.index);
       });
     }
 
-    // Detach and re-append in new order
+    // 3. Filter Logic & DOM Manipulation
+    // We detach everything and re-append in the new order
     listWrapper.innerHTML = "";
-    sortedEntries.forEach((node) => listWrapper.appendChild(node));
-  });
+
+    items.forEach((item) => {
+      const category = item.dataset.category;
+
+      // Check if item matches filter
+      if (filterValue === "all" || category === filterValue) {
+        item.style.display = "flex"; // Ensure it's visible
+        listWrapper.appendChild(item);
+      } else {
+        // Option A: Hide it using CSS (keeps it in DOM, good for transitions)
+        // item.style.display = "none";
+        // listWrapper.appendChild(item);
+
+        // Option B: Don't append it (cleaner DOM, faster for huge lists)
+        // We will stick to Option A logic roughly, but since we cleared innerHTML
+        // we strictly only append what matches if we want a "hard" filter,
+        // OR we append everything and hide the non-matches.
+        // Let's append everything but hide non-matches to keep the Sort logic simple.
+
+        item.style.display = "none";
+        listWrapper.appendChild(item);
+      }
+    });
+  }
+
+  // Add listeners
+  sortSelect.addEventListener("change", updateList);
+  filterSelect.addEventListener("change", updateList);
 </script>
 
 <style>
