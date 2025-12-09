@@ -5,7 +5,7 @@ import Layout from "../layouts/Layout.astro";
 
 <Layout>
   <Sidebar />
-  <div class="entries">
+  <div class="about">
     <h1>The Frontier in 2025: Omnidisciplinary Breakthroughs of the Year</h1>
     <div class="subtitle">A human-labelled dashboard of big, real news</div>
 
@@ -164,10 +164,9 @@ import Layout from "../layouts/Layout.astro";
 </Layout>
 
 <style>
-  .entries {
+  .about {
     margin-left: calc(20rem + 100px);
-    margin-top: 2rem;
-    padding: 0rem 2rem;
+    padding: 2rem;
     width: calc(100% - 20rem - 100px);
     max-width: 46rem;
     font-size: 18px;
@@ -183,7 +182,7 @@ import Layout from "../layouts/Layout.astro";
   }
 
   @media (max-width: 1024px) {
-    .entries {
+    .about {
       margin-left: 0px;
       width: 100%;
       padding: 1.2rem;

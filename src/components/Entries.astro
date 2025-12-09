@@ -1,5 +1,6 @@
 ---
 import events from "../content/2025.json";
+const categories = [...new Set(events.map((e) => e.category))];
 const getValenceColor = (valence: "Good" | "Bad") => {
   if (valence === "Good") return "green";
   if (valence === "Bad") return "#C7262C";
@@ -7,100 +8,161 @@ const getValenceColor = (valence: "Good" | "Bad") => {
 ---
 
 <section class="entries">
-  <div class="filters">
-    <div>
-      Sort by: <select> </select>
-    </div>
-    <div>
-      Filter: <select> Null </select>
+  <div class="flex justify-end pointer-events-none w-full">
+    <div class="flex gap-6 w-86 bg-grey pointer-events-auto p-4 uppercase text-sm">
+      <div class="flex gap-2 items-center">
+        Sort:
+        <select id="sort" class="truncate w-24 bg-white border-black p-1 rounded-md">
+          <option> P(true) </option>
+          <option> big | true </option>
+          <option> big & true </option>
+        </select>
+      </div>
+      <div class="flex gap-2 items-center">
+        Filter:
+        <select id="filter" class="truncate w-24 bg-white border-black p-1 rounded-md">
+          <option disabled> Category </option>
+          <option value="all">All</option>
+          {categories.map((c) => <option value={c}>{c}</option>)}
+          <hr />
+          <option disabled> Valence </option>
+          <option> Good </option>
+          <option> Bad </option>
+          <hr />
+          <option disabled> Evidence type </option>
+          <option> Demo </option>
+          <option> RCT </option>
+          <option> Real-world evidence </option>
+          <option> Speculation </option>
+          <option> Established fact </option>
+        </select>
+      </div>
     </div>
   </div>
-  {
-    events &&
-      events.length > 0 &&
-      events.map((item) => (
-        <div class="entry">
-          <div class="probs">
+
+  <div class="list-wrapper">
+    {
+      events &&
+        events.length > 0 &&
+        events
+          .sort((a, b) => b["P(generalises)"] - a["P(generalises)"])
+          .map((item) => (
             <div
-              class="probs-true"
-              style={{
-                width: `${item["P(generalises)"] * 100}%`,
-                border: "solid 1px " + getValenceColor(item.valence),
-                "border-right": "none",
-                "--stripe-color": getValenceColor(item.valence),
-              }}
-            />
-          </div>
-
-          <div class="content">
-            <h3>{item.summary}</h3>
-            {item.commentary && (
-              <details>
-                <summary>+</summary>
-                <div>{item.commentary}</div>
-              </details>
-            )}
-          </div>
-
-          <div class="categories">
-            <div>{item.category}</div>
-            <div>{item.subcategory}</div>
-            <div>{item.subsub}</div>
-          </div>
-
-          <div class="links">
-            {item.evidence && (
-              <div>
-                {item.evidence == "Speculation"
-                  ? "❔"
-                  : item.evidence == "Established fact"
-                    ? "❗️"
-                    : item.evidence == "Demo"
-                      ? "🛠️"
-                      : item.evidence == "RCT"
-                        ? "🧪"
-                        : item.evidence == "Real-world evidence"
-                          ? "📈"
-                          : ""}
-                {item.evidence}
+              class="entry"
+              data-category={item.category}
+              data-valence={item.valence}
+              data-evidence={item.evidence}
+              data-prob={item["P(generalises)"]}
+              data-scale={item["big | true"]}
+            >
+              <div class="probs">
+                <div
+                  class="probs-true"
+                  style={{
+                    width: `${item["P(generalises)"] * 100}%`,
+                    border: "solid 1px " + getValenceColor(item.valence),
+                    "border-right": "none",
+                    "--stripe-color": getValenceColor(item.valence),
+                  }}
+                />
               </div>
-            )}
-            {item.primary_source && (
-              <a href={item.primary_source} class="pill">
-                ○ PRIMARY SOURCE
-              </a>
-            )}
-            {item.other_sources && (
-              <a href={item.other_sources} class="pill">
-                ○ SECONDARY SOURCE
-              </a>
-            )}
-          </div>
-        </div>
-      ))
-  }
+
+              <div class="content">
+                <h3>{item.summary}</h3>
+                {item.commentary && (
+                  <details>
+                    <summary>+</summary>
+                    <div>{item.commentary}</div>
+                  </details>
+                )}
+              </div>
+
+              <div class="categories">
+                <div>{item.category}</div>
+                <div>{item.subcategory}</div>
+                <div>{item.subsub}</div>
+              </div>
+
+              <div class="links">
+                {item.evidence && (
+                  <div>
+                    {item.evidence == "Speculation"
+                      ? "❔ "
+                      : item.evidence == "Established fact"
+                        ? "❗️ "
+                        : item.evidence == "Demo"
+                          ? "🛠️ "
+                          : item.evidence == "RCT"
+                            ? "🧪 "
+                            : item.evidence == "Real-world evidence"
+                              ? "📈 "
+                              : ""}
+                    {item.evidence}
+                  </div>
+                )}
+                {item.primary_source && (
+                  <a href={item.primary_source} class="pill">
+                    ○ Primary source
+                  </a>
+                )}
+                {item.other_sources && (
+                  <a href={item.other_sources} class="pill">
+                    ○ Secondary source
+                  </a>
+                )}
+              </div>
+            </div>
+          ))
+    }
+  </div>
 </section>
+
+<script>
+  const filterSelect = document.getElementById("filter");
+  const sortSelect = document.getElementById("sort");
+  const listWrapper = document.getElementById("list-wrapper");
+  // Store original order for reset
+  const originalOrder = Array.from(listWrapper.children);
+
+  filterSelect.addEventListener("change", (e) => {
+    const category = e.target.value;
+    const entries = document.querySelectorAll(".entry");
+
+    entries.forEach((entry) => {
+      if (category === "all" || entry.dataset.category === category) {
+        entry.style.display = "flex"; // or whatever your display is
+      } else {
+        entry.style.display = "none";
+      }
+    });
+  });
+
+  // 2. Handle Sorting (The annoying part in Vanilla JS)
+  sortSelect.addEventListener("change", (e) => {
+    const method = e.target.value;
+    const entries = Array.from(listWrapper.children);
+
+    let sortedEntries;
+
+    if (method === "default") {
+      sortedEntries = originalOrder; // Reset to DOM order
+    } else if (method === "prob_desc") {
+      sortedEntries = entries.sort((a, b) => {
+        return parseFloat(b.dataset.prob) - parseFloat(a.dataset.prob);
+      });
+    }
+
+    // Detach and re-append in new order
+    listWrapper.innerHTML = "";
+    sortedEntries.forEach((node) => listWrapper.appendChild(node));
+  });
+</script>
 
 <style>
   .entries {
     margin-left: calc(20rem + 100px);
-    margin-top: 2rem;
     padding-bottom: 2rem;
     width: calc(100% - 20rem - 100px);
-  }
-
-  .filters {
-    display: flex;
-    padding: 12px 16px;
-    gap: 2em;
-    width: fit-content;
-    justify-content: end;
-    text-transform: uppercase;
-    position: sticky;
-    margin-left: 80%;
-    top: 0;
-    z-index: 10;
-    background: var(--color-grey);
   }
 
   .entry {
@@ -123,12 +185,12 @@ const getValenceColor = (valence: "Good" | "Bad") => {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    gap: 14px;
+    gap: 12px;
     width: 10rem;
     flex-shrink: 0;
-    font-family: monospace;
-    font-size: 0.8em;
-    text-transform: uppercase;
+    /*font-family: monospace;*/
+    font-size: 0.9em;
+    /*text-transform: uppercase;*/
   }
 
   .entry details div {
@@ -138,21 +200,16 @@ const getValenceColor = (valence: "Good" | "Bad") => {
   }
 
   .links {
-    width: 11rem;
+    width: 10rem;
     flex-shrink: 0;
     display: grid;
-    gap: 14px;
+    gap: 12px;
     height: fit-content;
-    font-family: monospace;
-    font-size: 0.8em;
-    text-transform: uppercase;
+    font-size: 0.9em;
   }
 
   .pill {
-    /*background: #eee;*/
-    width: fit-content;
     color: var(--color-theme);
-    /*border: solid 1px #ff804f;*/
   }
 
   .probs {
@@ -191,6 +248,7 @@ const getValenceColor = (valence: "Good" | "Bad") => {
       padding-left: 100px;
       margin-left: 0px;
       width: 100%;
+      margin-top: 1em;
     }
   }
 
