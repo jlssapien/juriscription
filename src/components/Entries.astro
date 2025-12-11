@@ -17,10 +17,10 @@ const getValenceColor = (valence: "Good" | "Bad") => {
     >
       <div class="flex gap-2 items-center">
         SORT
-        <select id="sort" class="truncate w-32 bg-white border-black p-1 rounded-md">
+        <select id="sort" class="truncate w-37 bg-white border-black p-1 rounded-md">
           <option value="ev">Expected Value (Big * P)</option>
           <option value="big">Big if True</option>
-          <option value="prob">P(Generalises)</option>
+          <option value="prob">P(generalises)</option>
         </select>
       </div>
       <div class="flex gap-2 items-center">
@@ -126,7 +126,7 @@ const getValenceColor = (valence: "Good" | "Bad") => {
                         ? "❗️ "
                         : item.evidence == "Demo"
                           ? "🛠️ "
-                          : item.evidence == "RCT"
+                          : item.evidence == "RCT, etc"
                             ? "🧪 "
                             : item.evidence == "Real-world"
                               ? "📈  "
