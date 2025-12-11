@@ -38,7 +38,7 @@ const getValenceColor = (valence: "Good" | "Bad") => {
       events &&
         events.length > 0 &&
         events
-          .sort((a, b) => b["P(generalises)"] - a["P(generalises)"])
+          .sort((a, b) => b["big & true"] - a["big & true"])
           .map((item, index) => (
             <div
               class="entry"
@@ -53,14 +53,30 @@ const getValenceColor = (valence: "Good" | "Bad") => {
               <div class="probs">
                 <div
                   class="probs-true"
-                  title={"P(generalises) = " + item["P(generalises)"]}
+                  title={"big & true = " + item["big & true"]}
                   style={{
-                    width: `${item["P(generalises)"] * 100}%`,
+                    width: `${item["big & true"] / 6 * 100}%`,
                     border: "solid 1px " + getValenceColor(item.valence),
                     "border-right": "none",
                     "--stripe-color": getValenceColor(item.valence),
                   }}
-                />
+                >
+                <span class="tooltip">
+                    <div
+                      class="probs-true"
+                      title={"P(big & true) = " + item["P(big & true)"]}
+                      style={{
+                        width: "25%",
+                        "--stripe-color": getValenceColor(item.valence),
+                        "padding-bottom": "10px"
+                      }}
+                    />
+                    = <span style="margin-top:5px">P(generalises) * big | true</span><br>
+                    = <span style="color:var(--color-theme)">{item["P(generalises)"]}</span> 
+                    * <span style="color:var(--color-theme)">{item["big | true"]}</span>
+                    = <span style="color:var(--color-theme)">{item["big & true"]}</span> 
+                </span>
+                </div>
               </div>
 
               <div class="content">
@@ -74,13 +90,13 @@ const getValenceColor = (valence: "Good" | "Bad") => {
 
                     <div class="flex gap-x-5 gap-y-0 flex-wrap pb-3">
                       <div>
-                        P(true) = <span class="text-black">{item["P(generalises)"]}</span>
+                        P(generalises) = <span class="text-black">{item["P(generalises)"]}</span>
                       </div>
                       <div>
                         Big | True = <span class="text-black">{item["big | true"]}</span>
                       </div>
                       <div>
-                        Big * P(true) = <span class="text-black">{item["big & true"]}</span>
+                        Big * P(generalises) = <span class="text-black">{item["big & true"]}</span>
                       </div>
                     </div>
 
@@ -266,6 +282,23 @@ const getValenceColor = (valence: "Good" | "Bad") => {
   .entry h3 {
     font-size: 1.2rem;
     margin-bottom: 8px;
+  }
+
+  .probs-true:hover .tooltip {
+    display: block;
+  }
+
+  .tooltip {
+    display: none;
+    background: #fff;
+    margin-left: 28px;
+    padding: 15px;
+    border: solid 1px;
+    position: absolute;
+    font-size: 10pt;
+    z-index: 1000;
+    width: 200px;
+    height: 85px;
   }
 
   @media (max-width: 1024px) {

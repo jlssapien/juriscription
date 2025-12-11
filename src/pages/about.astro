@@ -73,9 +73,9 @@ import Layout from "../layouts/Layout.astro";
       >, but mistakes are our own.
     </p>
     <p>
-      Design and development of the site was by <a
-        target="_blank"
-        style="color: var(--color-theme)"
+      Site designed and developed by <a 
+        target="_blank" 
+        style="color: var(--color-theme)" 
         href="https://webcraft.joodalop.com"
       >
         Judah</a
@@ -88,15 +88,23 @@ import Layout from "../layouts/Layout.astro";
       <li>
         <b>Category</b>. e.g. AI | Medicine | Protein design
       </li>
-
       <li>
-        <b>P(generalises)</b>. This is how likely we think it is to replicate or generalise, on priors. Preprint
+        <b>Evidence type</b>: A rough classification into
+        <ul>
+            <li><i>Speculation</i> – a hypothesis, an untested theory, an unconfirmed claim. (Imagine someone having an idea for a new cytokine against cancer.)</li>
+            <li><i>Demo</i> – a preprint, a proof of concept, or an expensive demonstration. Imagine someone trying out the cytokine in vitro and it working.</li>
+            <li><i>RCT, etc</i> – a serious trial with careful causal inference. Most physics crucial experiments are “RCTs” in this sense. Imagine someone running a small clinical trial for the cytokine in humans.</li>
+            <li><i>Real-world evidence</i> – clear retrospective evidence from long-term mass deployment, and large demand actually met with large supply. (Imagine the cytokine becoming a clinical standard and getting lots of system-level evidence of effectiveness generated all the time.)</li>
+            <li><i>Established fact</i> – e.g. an accepted or formalised mathematical proof, or something true by definition like a legal judgment. (Hard to imagine a medicine reaching this level, but perhaps future personalised, precision-targeted versions with real-time in situ monitoring would, or now, maybe a 40-year-followup Cochrane review on its effect on all-cause mortality.)</li>
+        </ul>
+      <br>
+      <li>
+        <b>P(generalises)</b>. How likely we think it is to replicate or generalise, on priors. Preprint
         mathematics from a serious researcher is often around 90%. Preclinical in-vitro drug candidates are, <a
           style="color: var(--color-theme);"
           href="https://humanspecificresearch.org/the-harsh-reality-of-drug-discovery-and-development/">notoriously</a
         >, below 8%.
       </li>
-
       <li>
         <p>
           <b>big | true</b>. Every entry in the list is significant – scientifically, socially, or in delightfulness.
