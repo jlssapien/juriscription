@@ -63,7 +63,7 @@ const getValenceColor = (valence: "Good" | "Bad") => {
               </div>
 
               <div class="content">
-                <h3><a href={item.primary_source}>{item.summary}</a></h3>
+                <h3>{item.summary}</h3>
                   <br>
                 <details>
                   <summary><big>+</big></summary>
@@ -71,13 +71,8 @@ const getValenceColor = (valence: "Good" | "Bad") => {
                     {item.commentary && <div class="pb-3">{item.commentary}</div>}
                     
                     <div class="flex gap-x-5 gap-y-0 flex-wrap">
-                      {item.primary_source && (
-                        <a href={item.primary_source} class="pill">
-                          ○ &nbsp;&nbsp;Primary source
-                        </a>
-                      )}
                       {item.other_sources && (
-                        <a href={item.other_sources} class="pill">
+                        <a href={item.other_sources} target="_blank" class="pill">
                           ○ &nbsp;&nbsp;Secondary source
                         </a>
                       )}
