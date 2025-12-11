@@ -138,6 +138,7 @@ details summary {
   touch-action: manipulation;
   color: var(--color-theme);
   user-select: none;
+  cursor: pointer;
 }
 
 details > summary {

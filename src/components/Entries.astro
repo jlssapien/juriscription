@@ -12,8 +12,8 @@ const getValenceColor = (valence: "Good" | "Bad") => {
 <section class="entries">
   <div class="flex justify-end pointer-events-none w-full">
     <div
-      class="flex flex-wrap justify-end gap-5 gap-y-4 w-fit bg-grey pointer-events-auto p-4 px-3 text-sm text-stone-500"
-    >
+      class="flex flex-wrap justify-end gap-10 gap-y-4 w-fit bg-grey pointer-events-auto p-4 px-3 text-sm text-stone-500"
+      style="padding-right:40px">
       <div class="flex gap-2 items-center">
         SORT
         <select id="sort" class="truncate w-32 bg-white border-black p-1 rounded-md">
@@ -63,11 +63,25 @@ const getValenceColor = (valence: "Good" | "Bad") => {
               </div>
 
               <div class="content">
-                <h3>{item.summary}</h3>
+                <h3><a href={item.primary_source}>{item.summary}</a></h3>
                 <details>
-                  <summary>+</summary>
+                  <summary><big>+</big></summary>
                   <div class="text-sm pt-1 text-stone-500">
                     {item.commentary && <div class="pb-3">{item.commentary}</div>}
+                    
+                    <div class="flex gap-x-5 gap-y-0 flex-wrap">
+                      {item.primary_source && (
+                        <a href={item.primary_source} class="pill">
+                          ○ &nbsp;&nbsp;Primary source
+                        </a>
+                      )}
+                      {item.other_sources && (
+                        <a href={item.other_sources} class="pill">
+                          ○ &nbsp;&nbsp;Secondary source
+                        </a>
+                      )}
+                    </div>
+                    <br>
                     <div class="flex gap-x-5 gap-y-0 flex-wrap">
                       <div>
                         P(true) = <span class="text-black">{item["P(generalises)"]}</span>
@@ -100,20 +114,17 @@ const getValenceColor = (valence: "Good" | "Bad") => {
                           ? "🛠️ "
                           : item.evidence == "RCT"
                             ? "🧪 "
-                            : item.evidence == "Real-world evidence"
-                              ? "📈 "
-                              : ""}
-                    {item.evidence}
+                            : item.evidence == "Real-world"
+                              ? "📈  "
+                              : item.evidence == "In mice"
+                              ? "🐭  "
+                                : ""}
+                    &nbsp;{item.evidence}
                   </div>
                 )}
                 {item.primary_source && (
                   <a href={item.primary_source} class="pill">
-                    ○ Primary source
-                  </a>
-                )}
-                {item.other_sources && (
-                  <a href={item.other_sources} class="pill">
-                    ○ Secondary source
+                    ○ &nbsp;&nbsp;Primary source
                   </a>
                 )}
               </div>

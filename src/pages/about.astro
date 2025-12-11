@@ -6,25 +6,24 @@ import Layout from "../layouts/Layout.astro";
 <Layout>
   <Sidebar />
   <div class="about">
-    <h1>The Frontier in 2025: Omnidisciplinary Breakthroughs of the Year</h1>
-    <div class="text-stone-400 mb-8 text-2xl -mt-2">A human-labelled dashboard of big, real news</div>
+    <h1>Frontier of the Year 2025</h1>
+    <div class="text-stone-400 mb-8 text-2xl -mt-2">A human-labelled dashboard of big, real scientific news</div>
     <p>by Gavin Leech, Lauren Gilbert, and Ulkar Aghayeva</p>
     <p>
-      A couple of years ago, Gavin became frustrated with science journalism. No one was pulling together results across
+      <br>A couple of years ago, Gavin became frustrated with science journalism. No one was pulling together results across
       fields; the articles often didn’t link to the original source; they were usually credulous about preliminary
-      findings; and they essentially never gave any sense of the magnitude or the baselines (“how much better is this
-      treatment than the previous best?”) or probabilities for context. Speculative results were covered with the same
-      implied authority and credence as solid proofs. And highly technical fields like mathematics were rarely covered
+      findings; and they essentially never gave any sense of the magnitude or the baselines “how much better is this treatment than the previous best?”, “what was the sample size?”, “which species was it tested on?” or probabilities for context. Speculative results were covered with the same
+      credence as solid proofs. And highly technical fields like mathematics were rarely covered
       at all, regardless of their practical importance. So he <a
-        href="https://x.com/g_leech_/status/1731263549182206291">had a go</a
-      > at <a href="https://x.com/g_leech_/status/1864354552520007750">doing it</a> himself, on Twitter.
+        href="https://x.com/g_leech_/status/1731263549182206291" style="color: var(--color-theme);">had a go</a
+      > at <a href="https://x.com/g_leech_/status/1864354552520007750" style="color: var(--color-theme);">doing it</a> himself, on Twitter.
     </p>
     <p>
       That’s fine as far as it goes, but this year, thanks to Renaissance Philanthropy, we’re doing it properly. We
       checked systematically for big findings and then scored them with our subjective sense of how solid and impactful
       they could be.
     </p>
-    <ul>
+    <!--<ul>
       <li>
         <b>It’s plausibly real</b>. The experiment or deployment genuinely happened; it’s not an artefact, p-hacked, or
         pure PR.
@@ -37,128 +36,77 @@ import Layout from "../layouts/Layout.astro";
         <b>It bends the curve</b>. A result is Big If True if it would unlock new capability frontiers, flip constraints
         into engineering problems, or create new control knobs for important systems.
       </li>
-    </ul>
+    </ul>-->
     <p>
       So: how did the world change this year? What happened in each science? Which results are speculative and which are
       solid? Which are the biggest, if true?
     </p>
     <p>
-      Our collection of 154 results is here; you can filter by field, by our best guess of the probability that they
-      generalise, and by their impact if they do. We also include a section on Bad News.
+      Our collection of 171 results is <a href="/" style="color: var(--color-theme);">here</a>. You can filter them by field, by our best guess of the probability that they generalise, and by their impact if they do. We also include bad news (in red).
     </p>
-    <h2>Fields</h2>
+    <h2>Who are we?</h2>
+    <p>
+      We cover a few fields. <a style="color: var(--color-theme);" href="https://gleech.org">Gavin</a> has a PhD in AI and has worked in epidemiology and metascience; <a style="color: var(--color-theme);" href="https://x.com/notanastronomer">Lauren</a> was a
+      physicist and is now a development economist; <a style="color: var(--color-theme);" href="https://www.ulkaraghayeva.com/about">Ulkar</a> was a wet-lab biologist and is now a science writer. For other
+      domains we had expert help from the <a style="color: var(--color-theme);"
+        href="https://www.renaissancephilanthropy.org/big-if-true-science-accelerator">Big If True fellows</a
+      >, but mistakes are our own.
+    </p>
+    <p>
+      The design and development of the site is by <a target="_blank" style="color: var(--color-theme)" href="https://webcraft.joodalop.com">
+        Judah</a>.
+    </p>
+    
+    <h2>Data fields</h2>
+    <br>
     <ul>
       <li>
         <b>Category</b>. e.g. AI | Medicine | Protein design
       </li>
+      <br>
       <li>
         <b>P(generalises)</b>. This is how likely we think it is to replicate or generalise, on priors. Preprint
-        mathematics from serious researchers is often around 90%. Preclinical in-vitro drug candidates are, <a
-          href="https://humanspecificresearch.org/the-harsh-reality-of-drug-discovery-and-development/">notoriously</a
+        mathematics from a serious researcher is often around 90%. Preclinical in-vitro drug candidates are, <a
+          style="color: var(--color-theme);" href="https://humanspecificresearch.org/the-harsh-reality-of-drug-discovery-and-development/">notoriously</a
         >, more like 8%.
       </li>
+      <br>
       <li>
         <b>big | true</b>. Every entry in the list is significant – scientifically, socially, or in delightfulness. But
         we wanted to weight them by impact. The “big if true” field is our guess at how much the entry would change the
         world if it generalised.
+        <br><br>
         <ul>
           <li>
             We use Nate Silver’s “<a
-              href="https://www.lesswrong.com/posts/oAy72fcqDHsCvLBKz/ai-and-the-technological-richter-scale"
-              >Technology Richter Scale</a
+              href="https://www.lesswrong.com/posts/oAy72fcqDHsCvLBKz/ai-and-the-technological-richter-scale" style="color: var(--color-theme);">Technology Richter Scale</a
             >”, on which a 4 is something which is commercialisable but not category-defining (like a slightly better
             mousetrap), a 6 is “on the short list for technology of the year” (Post-its, VCRs), and an 8 is on the short
             list for technology of the century (cars, electricity, the internet).
           </li>
           <li>
             This score includes not just the impact of the particular discovery, but also the consequences of the method
-            used in the discovery. For instance, the <a href="https://github.com/math-inc/strongpnt">formalisation</a> of
+            used in the discovery. For instance, the <a style="color: var(--color-theme);" href="https://github.com/math-inc/strongpnt">formalisation</a> of
             the Strong Prime Number Theorem has no particular social impact, but the implications of autoformalising new mathematical
             results and the resulting acceleration of many kinds of research warrants <i>at least</i> a 5 on the scale.
           </li>
         </ul>
       </li>
+      <br>
       <li>
-        <b>Good/Bad.</b> On net, do we expect the first-order effect of this to be positive for the world, or not.
+        <b>Good/Bad.</b> Basic: on net, whether we expect the first-order effect of this to be positive for the world, or not.
       </li>
     </ul>
+    <br>
     <p>
       Our judgments of P(generalises), big | true, and Good/Bad are avowedly subjective. If we got something wrong
-      please tell us at <a href="mailto:gavin@arbresearch.com"
-        ><a href="mailto:gavin@arbresearch.com">gavin@arbresearch.com</a></a
-      >.
+      please tell us at <a style="color: var(--color-theme);"href="mailto:gavin@arbresearch.com"
+        >gavin@arbresearch.com</a>.
     </p>
-    <h2>Who are we?</h2>
+    <h2>Acknowledgments</h2>
     <p>
-      We cover a few fields. Gavin has a PhD in AI and has worked in epidemiology and metascience; Lauren was a
-      physicist and is now a development economist; Ulkar was a wet-lab biologist and is now a science writer. For other
-      domains we had expert help from the <a
-        href="https://www.renaissancephilanthropy.org/big-if-true-science-accelerator">Big If True fellows</a
-      >, but mistakes are our own.
+    We thank Alex German, Tim McGee, Eirini Malliaraki, Markus Strasser, Anders Sandberg, Niccolò Zanichelli, Tom McCarthy, Ryan Marinelli, Lucia Asanache, Dron Hazra, Ronit Kanwar, and Paul Crowe for comments.
     </p>
-    <h2>Some highlights</h2>
-    <ol>
-      <li>
-        <b>The first human trials of mitochondrial replacement therapy</b> resulted in n=8 healthy babies. 100% success rate,
-        and eliminates several fatal inherited diseases. All born to mothers with dangerous mitochondrial homoplasmy genes.
-        Followup period is up to 2 years, normal development so far.
-      </li>
-      <li>
-        <b>E. coli vaccine entered Phase III</b> clinical trials - the second-most lethal bacterium in the world (a million
-        deaths per year), no effective existing vaccines. About 10% of food poisoning cases are in the crosshairs.
-      </li>
-      <li>
-        <b>The most energy-dense molecule ever synthesised</b>: hexanitrogen. Revolutionary potential for a light and
-        noncorrosive rocket fuel.
-      </li>
-      <li>
-        <b>The shingles vaccine protects against dementia.</b> 3.5% absolute risk reduction. The study is a natural experiment
-        with a 7-year follow-up, fairly strong evidence.
-      </li>
-      <li><b>Automated detection of critical security bugs in software.</b> Google’s Big Sleep agent and the</li>
-      <li><b>An AI proof system, AlphaEvolve, helps Terry Tao discover two publishable results</b></li>
-      <li>Wild chimps ingest the equivalent of a pint of lager a day via fermented fruit.</li>
-      <li>Genetically designing entirely new flowers is now a viable hobby</li>
-      <li>
-        First recorded instance of "xenoparity" in the wild (an animal giving birth to offspring of a different
-        species).
-      </li>
-    </ol>
-    <h3>Big if true</h3>
-    <ol>
-      <li>
-        <b>The first oral non-opioid painkiller was approved in the US.</b> Suzetrigine is as strong as low-dose morphine
-        and is a sodium-channel blocker, which could be less addictive.
-      </li>
-      <li>
-        <b>The first vaccine for salmonella</b> - 70% effectiveness in a challenge trial with n=72. There are 2 million cases
-        and perhaps 150k deaths a year from the bug.
-      </li>
-      <li>
-        <b>Genetic improvement of the world’s most abundant enzyme</b>. RuBisCO mutations +50% plant growth - could
-        reshape agriculture if the technique or meta-technique generalises beyond tobacco.
-      </li>
-      <li>
-        <b>Pancreatic cancer vaccine</b> (80%→30% recurrence, n=16, 3-year follow-up) - Small trial but pancreatic cancer
-        is particularly lethal
-      </li>
-      <li><b>Tooth regeneration in human trials</b> - Common problem, novel biological approach</li>
-    </ol>
-    <h3>Social breakthroughs</h3>
-    <ol>
-      <li><b>Global murder rate down 25% since 2000</b> - Enormous welfare improvement, underappreciated trend</li>
-      <li>Extreme poverty drops from 27% of Indian population to 3.5% in 11 years.</li>
-      <li>China emissions potentially falling - Largest emitter peaking is climate-critical</li>
-    </ol>
-    <h3>Bad news</h3>
-    <ul>
-      <li>
-        NIH funding cuts threaten 50% of future treatments. <a
-          href="https://www.science.org/doi/10.1126/science.aeb1564">A model</a
-        > by Pierre Azoulay, Matt Clancy and others implies that if the <i>lowest</i> priority 40% of grants had been cut
-        in the past, up to half of all successful new medicines would not have been developed (at least in this time period).
-      </li>
-    </ul>
   </div>
 </Layout>
 
