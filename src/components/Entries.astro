@@ -28,6 +28,9 @@ const getValenceColor = (valence: "Good" | "Bad") => {
         <select id="filter" class="truncate w-32 bg-white border-black p-1 rounded-md">
           <option value="all">Everything</option>
           {categories.map((c) => <option value={c}>{c}</option>)}
+          <option disabled>Subcategory</option>
+          <option value="Energy">Energy</option>
+          <option value="Medicine">Medicine</option>
         </select>
       </div>
     </div>
@@ -44,6 +47,7 @@ const getValenceColor = (valence: "Good" | "Bad") => {
               class="entry"
               data-index={index}
               data-category={item.category}
+              data-subcategory={item.subcategory}
               data-valence={item.valence}
               data-evidence={item.evidence}
               data-prob={item["P(generalises)"]}
@@ -53,29 +57,25 @@ const getValenceColor = (valence: "Good" | "Bad") => {
               <div class="probs">
                 <div
                   class="probs-true"
-                  title={"big & true = " + item["big & true"]}
                   style={{
-                    width: `${item["big & true"] / 6 * 100}%`,
+                    width: `${(item["big & true"] / 6) * 100}%`,
                     border: "solid 1px " + getValenceColor(item.valence),
                     "border-right": "none",
                     "--stripe-color": getValenceColor(item.valence),
                   }}
                 >
-                <span class="tooltip">
-                    <div
-                      class="probs-true"
-                      title={"P(big & true) = " + item["P(big & true)"]}
-                      style={{
-                        width: "25%",
-                        "--stripe-color": getValenceColor(item.valence),
-                        "padding-bottom": "10px"
-                      }}
-                    />
-                    = <span style="margin-top:5px">P(generalises) * big | true</span><br>
-                    = <span style="color:var(--color-theme)">{item["P(generalises)"]}</span> 
-                    * <span style="color:var(--color-theme)">{item["big | true"]}</span>
-                    = <span style="color:var(--color-theme)">{item["big & true"]}</span> 
-                </span>
+                  <span class="tooltip">
+                    <div class="uppercase" style={{ color: getValenceColor(item.valence) }}>
+                      {item.valence}
+                    </div>
+                    <div>
+                      <span style="margin-top:5px">P(generalises) × big | true</span>
+                    </div>
+                    <div>
+                      {item["P(generalises)"]} × {item["big | true"]} =
+                      <span style="color:var(--color-theme)">{item["big & true"]}</span>
+                    </div>
+                  </span>
                 </div>
               </div>
 
@@ -138,7 +138,7 @@ const getValenceColor = (valence: "Good" | "Bad") => {
                 )}
                 {item.primary_source && (
                   <a href={item.primary_source} class="pill">
-                    ○ &nbsp;&nbsp;Primary source
+                    &nbsp;○ &nbsp;Primary source
                   </a>
                 )}
               </div>
@@ -189,9 +189,10 @@ const getValenceColor = (valence: "Good" | "Bad") => {
 
     items.forEach((item) => {
       const category = item.dataset.category;
+      const subcategory = item.dataset.subcategory;
 
-      if (filterValue === "all" || category === filterValue) {
-        item.style.display = "flex"; // Ensure it's visible
+      if (filterValue === "all" || category === filterValue || subcategory === filterValue) {
+        item.style.display = "flex";
         listWrapper.appendChild(item);
       } else {
         item.style.display = "none";
@@ -285,20 +286,23 @@ const getValenceColor = (valence: "Good" | "Bad") => {
   }
 
   .probs-true:hover .tooltip {
-    display: block;
+    display: grid;
+    gap: 4px;
   }
 
   .tooltip {
     display: none;
     background: #fff;
-    margin-left: 28px;
-    padding: 15px;
-    border: solid 1px;
+    margin-left: 16px;
+    margin-top: 6px;
+    padding: 8px 10px;
+    /*border: dashed 1px var(--color-black);*/
+    border-radius: 4px;
     position: absolute;
     font-size: 10pt;
     z-index: 1000;
-    width: 200px;
-    height: 85px;
+    width: 180px;
+    box-shadow: 0px 1px 8px #ddd;
   }
 
   @media (max-width: 1024px) {
