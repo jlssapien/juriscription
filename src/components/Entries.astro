@@ -13,7 +13,8 @@ const getValenceColor = (valence: "Good" | "Bad") => {
   <div class="flex justify-end pointer-events-none w-full">
     <div
       class="flex flex-wrap justify-end gap-10 gap-y-4 w-fit bg-grey pointer-events-auto p-4 px-3 text-sm text-stone-500"
-      style="padding-right:40px">
+      style="padding-right:40px"
+    >
       <div class="flex gap-2 items-center">
         SORT
         <select id="sort" class="truncate w-32 bg-white border-black p-1 rounded-md">
@@ -64,21 +65,14 @@ const getValenceColor = (valence: "Good" | "Bad") => {
 
               <div class="content">
                 <h3>{item.summary}</h3>
-                  <br>
                 <details>
-                  <summary><big>+</big></summary>
-                  <div class="text-sm pt-1 text-stone-500" style="padding-top:10px">
+                  <summary>
+                    <big>+</big>
+                  </summary>
+                  <div class="text-sm text-stone-500 pt-2">
                     {item.commentary && <div class="pb-3">{item.commentary}</div>}
-                    
-                    <div class="flex gap-x-5 gap-y-0 flex-wrap">
-                      {item.other_sources && (
-                        <a href={item.other_sources} target="_blank" class="pill">
-                          ○ &nbsp;&nbsp;Secondary source
-                        </a>
-                      )}
-                    </div>
-                    <br>
-                    <div class="flex gap-x-5 gap-y-0 flex-wrap">
+
+                    <div class="flex gap-x-5 gap-y-0 flex-wrap pb-3">
                       <div>
                         P(true) = <span class="text-black">{item["P(generalises)"]}</span>
                       </div>
@@ -89,6 +83,14 @@ const getValenceColor = (valence: "Good" | "Bad") => {
                         Big * P(true) = <span class="text-black">{item["big & true"]}</span>
                       </div>
                     </div>
+
+                    {item.other_sources && (
+                      <div class="flex gap-x-5 gap-y-0 flex-wrap">
+                        <a href={item.other_sources} target="_blank" class="pill">
+                          Secondary source&nbsp; ↗
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </details>
               </div>
@@ -113,7 +115,7 @@ const getValenceColor = (valence: "Good" | "Bad") => {
                             : item.evidence == "Real-world"
                               ? "📈  "
                               : item.evidence == "In mice"
-                              ? "🐭  "
+                                ? "🐭  "
                                 : ""}
                     &nbsp;{item.evidence}
                   </div>
@@ -263,7 +265,7 @@ const getValenceColor = (valence: "Good" | "Bad") => {
 
   .entry h3 {
     font-size: 1.2rem;
-    margin-bottom: 0px;
+    margin-bottom: 8px;
   }
 
   @media (max-width: 1024px) {

@@ -8,23 +8,26 @@
       <a href="/">Frontier of the Year</a>
       <a href="/" style="color: var(--color-theme);"> 2025 </a>
     </h1>
-    <p>
-      How did the world change this year? Which results are speculative? Which are biggest, if true?
-    </p>
-    <p>
-      We collect and score 171 results. Filter by field, our best guess of the probability that they
-      generalise, or their impact if they do.
-    </p>
-    <br>
-    <p>
-      <a class="text-theme" href="/about">About</a>
-    </p>
-    <p>
-      <a class="text-theme" href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQlEqmbOPnXFe3MTSIPoYKXsuj3a67V4zpKNDLhCUkatNWjy2p2cD6IZO8OuKghvPhD5HkAYG-KhYWR/pubhtml">Data</a>
-    </p>
+    <div>
+      <p>How did the world change this year? Which results are speculative? Which are biggest, if true?</p>
+      <p>
+        We collect and score 171 results. Filter by field, our best guess of the probability that they generalise, or
+        their impact if they do.
+      </p>
+      <p>
+        <a class="text-theme" href="/about">About</a>
+      </p>
+      <p>
+        <a
+          class="text-theme"
+          href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQlEqmbOPnXFe3MTSIPoYKXsuj3a67V4zpKNDLhCUkatNWjy2p2cD6IZO8OuKghvPhD5HkAYG-KhYWR/pubhtml"
+          >Data</a
+        >
+      </p>
+    </div>
   </div>
 
-  <div class="grid gap-6">
+  <div class="flex items-center lg:items-start lg:flex-col gap-6">
     <a target="_blank" href="https://arbresearch.com/">
       <div class="flex gap-3 items-center">
         <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 300 300" fill="none">
@@ -34,11 +37,10 @@
             d="M161.375 8.33665C158.987 3.2214 153.838 -0.0345101 148.193 0.000276006C142.547 0.035061 137.439 3.35417 135.114 8.49847L69.9764 152.599H11V181.501H56.9123L12.5718 279.594C9.28448 286.866 12.5151 295.426 19.7875 298.714C27.0599 302.001 35.6203 298.77 38.9076 291.498L88.6292 181.501H155.507V152.599H101.693L148.495 49.062L261.776 291.66C265.153 298.891 273.752 302.016 280.984 298.639C288.215 295.263 291.34 286.663 287.963 279.432L161.375 8.33665Z"
             fill="#333"></path>
         </svg>
-        Arb
-        Research
+        Arb <br /> Research
       </div>
     </a>
-    <span style="padding-left:12px">&</span>
+    <span style="padding: 0px 12px">&</span>
     <a target="_blank" href="https://www.renaissancephilanthropy.org/">
       <div class="flex gap-3 items-center">
         <img class="w-9" src="/renphil.webp" />
@@ -62,7 +64,7 @@
 <style>
   .sidebar {
     width: 20rem;
-    padding: 1.5rem 2rem;
+    padding: 1rem 1.2rem;
     position: fixed;
     left: 0;
     top: 0;
@@ -78,7 +80,9 @@
       position: relative;
       height: fit-content;
       max-width: 40rem;
-      gap: 4rem;
+      gap: 3rem;
+      padding: 1.5rem;
+      padding-bottom: 4em;
     }
   }
 </style>

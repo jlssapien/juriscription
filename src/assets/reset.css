@@ -3,7 +3,7 @@
 @theme {
   --spacing: 4px;
   --base-font-size: 16px;
-  --bottom: calc(1.1 * var(--base-font-size));
+  --bottom: calc(1.5 * var(--base-font-size));
   --color-theme: #ff804f;
   --color-black: #131318;
   --color-grey: #ebebeb;
@@ -109,7 +109,7 @@ ul {
 
 ol li,
 ul li {
-  margin: 0.75em 0em;
+  margin: 1.5em 0em;
 }
 
 ul li {
