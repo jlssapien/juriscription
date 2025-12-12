@@ -440,7 +440,7 @@
         "subcategory": "Virology",
         "subsub": "Genetic engineering",
         "evidence": "In mice",
-        "summary": "Artificial chimeras of bat coronaviruses, with up to 100% mortality, produced, on purpose, under BSL-2 conditions",
+        "summary": "Artificial chimeras of bat coronaviruses, with up to 100% lethality, produced, on purpose, under BSL-2 conditions",
         "commentary": "Intentional design of chimera viruses which transfer across species (pig to mouse). n=83. Conducted in BSL-2 conditions, grossly inadequate. Guangzhou Medical University study published in the US Journal of Virology.",
         "P(generalises)": "0.65",
         "big | true": 8.0,
