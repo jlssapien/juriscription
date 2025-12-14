@@ -700,7 +700,7 @@
         "P(generalises)": "0.7",
         "big | true": 6.0,
         "big & true": 5.4,
-        "primary_source": "https://www.science.org/content/article/ai-conjures-potential-new-antibody-drugs-matter-months",
+        "primary_source": "https://www.nature.com/articles/d41586-025-03965-x",
         "other_sources": "https://chaiassets.com/chai-2/paper/technical_report_challenging_targets.pdf | https://www.biorxiv.org/content/10.1101/2025.05.28.656709v1 ",
         "valence": "Good"
     },
@@ -2162,8 +2162,8 @@
     {
         "year": 2025,
         "category": "Mathematics",
-        "subcategory": null,
-        "subsub": null,
+        "subcategory": "Analysis",
+        "subsub": "Summability",
         "evidence": "Established fact",
         "summary": "A new theory of summation",
         "commentary": "Uses the hyperreals to assign fine-grained values to divergent sums and integrals. Developed for ethical applications.",
