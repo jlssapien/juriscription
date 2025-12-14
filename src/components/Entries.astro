@@ -28,7 +28,6 @@ const getValenceColor = (valence: "Good" | "Bad") => {
         <select id="filter" class="truncate w-32 bg-white border-black p-1 rounded-md">
           <option value="all">Everything</option>
           {categories.map((c) => <option value={c}>{c}</option>)}
-          <option disabled>Subcategory</option>
           <option value="Energy">Energy</option>
           <option value="Medicine">Medicine</option>
         </select>
