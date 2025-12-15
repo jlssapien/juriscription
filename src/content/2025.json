@@ -2,6 +2,36 @@
     {
         "year": 2025,
         "category": "Biology",
+        "subcategory": "Medicine",
+        "subsub": "Oncology",
+        "evidence": "Demo",
+        "summary": "First-in-human 'prime editing' gene therapy. Cured an inherited immune disease.",
+        "commentary": "Clinical prime editing of CD34+ cells to treat the immune disease p47-CGD in n=2 patients. 6 month followup. PE is a CRISPR derivative that doesn't cut both strands of DNA and writes new code directly, allowing for much less off-target damage. It's a Cas9 nickase plus a guided reverse transcriptase (pegRNA). Fewer unwanted insertions/deletions, and opens up more edit types (substitutions, smaller indels). Just somatic edits, as usual. Big if true score reflects the method, not this condition (1 in 200,000).",
+        "P(generalises)": "0.65",
+        "big | true": 6,
+        "big & true": 4.2,
+        "primary_source": "https://www.nejm.org/doi/full/10.1056/NEJMoa2509807",
+        "other_sources": "https://www.nature.com/articles/d41586-025-01593-z",
+        "valence": "Good"
+    },
+    {
+        "year": 2025,
+        "category": "Biology",
+        "subcategory": "Medicine",
+        "subsub": "Oncology",
+        "evidence": "RCT, etc",
+        "summary": "Blood cancer treatment nearly triples survival-without-progression, to 83%",
+        "commentary": "Specifically for patients with relapsing multiple myeloma. Phase III trial (n-587), 4 year followup against an active and gold-standard control.",
+        "P(generalises)": "0.75",
+        "big | true": 5,
+        "big & true": 3.75,
+        "primary_source": "https://www.nejm.org/doi/full/10.1056/NEJMoa2514663",
+        "other_sources": "",
+        "valence": "Good"
+    },
+    {
+        "year": 2025,
+        "category": "Biology",
         "subcategory": "Computing",
         "subsub": "Neuroscience",
         "evidence": "Demo",
@@ -500,7 +530,7 @@
         "subcategory": "Public health",
         "subsub": "Covid ",
         "evidence": "Real-world",
-        "summary": "Whole-population follow-up of the Covid vaccines shows a large decrease in all-cause mortality",
+        "summary": "Whole-population follow-up on the Covid vaccines shows a large decrease in all-cause mortality",
         "commentary": "Average 4 year followup. In France (n=29 million) the vaccinated had a 25% decrease in all-cause mortality (and 74% less risk of Covid death). A Norway study (n=5m) found extremely similar results.",
         "P(generalises)": "0.85",
         "big | true": 6.0,
@@ -515,7 +545,7 @@
         "subcategory": "Mathematics",
         "subsub": null,
         "evidence": "Established fact",
-        "summary": "Various AIs contributed to the solving and formalisation of a series of open problems in research mathematics",
+        "summary": "AIs contributed to solving and formalising many open problems in research mathematics",
         "commentary": "Most of the results are improving on known bounds in number theory or optimisation, with a lively community also using them on the Erdos Problems (which also include graph theory, ramsey theory, combinatorics, and geometry). In most instances, humans provided the whole proof strategy and thousands of tokens of steering and some final cleanup. It also remains true that AIs don't yet come up with novel concepts, just use \"slight variant[s] of standard facts\".",
         "P(generalises)": "0.9",
         "big | true": 5.5,
@@ -545,11 +575,11 @@
         "subcategory": null,
         "subsub": null,
         "evidence": "Demo",
-        "summary": "Extreme poverty drops from 27% of India to 5% in a decade",
+        "summary": "Extreme poverty drops from 27% of India to 5% in one decade",
         "commentary": null,
         "P(generalises)": "0.7",
-        "big | true": 7.0,
-        "big & true": 4.9,
+        "big | true": 6.8,
+        "big & true": 4.76,
         "primary_source": "https://documents1.worldbank.org/curated/en/099722104222534584/pdf/IDU-25f34333-d3a3-44ae-8268-86830e3bc5a5.pdf",
         "other_sources": null,
         "valence": "Good"
@@ -591,13 +621,13 @@
         "subsub": null,
         "evidence": "Demo",
         "summary": "Unreleased AIs won gold at three of the hardest cognitive competitions in the world: IMO, ICPC, and IOI",
-        "commentary": "The AI submissions respected the human time cap (9 hours of clock time). Reportedly both the OpenAI and Deepmind systems are just an LLM (i.e. no external tools). They probably cost an insane amount to run, but for our purposes this is fine: we want the capability ceiling rather than the productisable ceiling. Maybe the first time that the frontier model has gone unreleased for 5 months?",
+        "commentary": "The AI submissions respected the human time cap (9 hours of clock time). Reportedly both the OpenAI and Deepmind systems are just an LLM (i.e. no external tools). They probably cost an insane amount to run, but for our purposes this is fine: we want the capability ceiling rather than the productisable ceiling.",
         "P(generalises)": "0.8",
         "big | true": 6.0,
         "big & true": 4.8,
         "primary_source": "https://deepmind.google/blog/advanced-version-of-gemini-with-deep-think-officially-achieves-gold-medal-standard-at-the-international-mathematical-olympiad/#:~:text=research techniques, including-,parallel thinking,-. This setup enables",
         "other_sources": "https://www.scientificamerican.com/article/openai-model-earns-gold-medal-score-at-international-math-olympiad-and/",
-        "valence": "-"
+        "valence": "Mixed"
     },
     {
         "year": 2025,
@@ -622,9 +652,9 @@
         "evidence": "Real-world",
         "summary": "Murder rates worldwide have fallen 25% since 2000",
         "commentary": "On average! Potentially some confounding from improved trauma emergency care converting murders into attempted murders.",
-        "P(generalises)": "0.8",
-        "big | true": 6.0,
-        "big & true": 4.8,
+        "P(generalises)": "0.65",
+        "big | true": 7.0,
+        "big & true": 4.55,
         "primary_source": "https://data.worldbank.org/indicator/VC.IHR.PSRC.P5",
         "other_sources": null,
         "valence": "Good"
@@ -652,9 +682,9 @@
         "evidence": "Real-world",
         "summary": "Three new countries certified malaria-free",
         "commentary": "Georgia, Suriname, and Timor-Leste have been certified malaria-free",
-        "P(generalises)": "0.95",
+        "P(generalises)": "0.85",
         "big | true": 5.0,
-        "big & true": 4.75,
+        "big & true": 4.25,
         "primary_source": "https://www.who.int/teams/global-malaria-programme/elimination/countries-and-territories-certified-malaria-free-by-who",
         "other_sources": null,
         "valence": "Good"
@@ -697,9 +727,9 @@
         "evidence": "Demo",
         "summary": "AI designs antibodies that can turn on or off membrane signaling proteins implicated in many diseases",
         "commentary": "G protein-coupled receptors are associated with retinitis, diabetes, hypertension, heart failure, obesity, and Alzheimer's. Nabla Bio uses test-time compute scaling to go through multiple rounds of generation and filtering of viable antibody structures (VHH, small single-chain antibodies). In contrast, another protein design company, Chai, relies on a strong base model that can zero-shot full-length drug-like IgG antibody design.",
-        "P(generalises)": "0.7",
+        "P(generalises)": "0.6",
         "big | true": 6.0,
-        "big & true": 5.4,
+        "big & true": 3.6,
         "primary_source": "https://www.nature.com/articles/d41586-025-03965-x",
         "other_sources": "https://chaiassets.com/chai-2/paper/technical_report_challenging_targets.pdf | https://www.biorxiv.org/content/10.1101/2025.05.28.656709v1 ",
         "valence": "Good"
@@ -910,7 +940,7 @@
         "P(generalises)": "0.7",
         "big | true": 6.0,
         "big & true": 4.2,
-        "primary_source": "https://www.axios.com/2025/08/05/anthropic-claude-ai-hacker-competitions-def-con?utm_medium=organic_social&utm_source=x&utm_campaign=editorial",
+        "primary_source": "https://www.axios.com/2025/08/05/anthropic-claude-ai-hacker-competitions-def-con",
         "other_sources": null,
         "valence": "Bad"
     },
@@ -925,7 +955,7 @@
         "P(generalises)": "0.7",
         "big | true": 7.0,
         "big & true": 4.9,
-        "primary_source": "https://arxiv.org/html/2504.15743v1?ref=blog.jacobtrefethen.com",
+        "primary_source": "https://arxiv.org/html/2504.15743v1",
         "other_sources": "https://openai.com/index/ai-clinical-copilot-penda-health/",
         "valence": "Good"
     },
@@ -1212,7 +1242,7 @@
         "big & true": 3.6,
         "primary_source": "https://www.icrar.org/xray-transient/",
         "other_sources": null,
-        "valence": "?"
+        "valence": "Mixed"
     },
     {
         "year": 2025,
@@ -1630,8 +1660,8 @@
         "P(generalises)": "0.5",
         "big | true": 6.0,
         "big & true": 3.0,
-        "primary_source": "https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(25)02097-5/abstract?utm_source=substack&utm_medium=email",
-        "other_sources": "https://www.bayer.com/en/us/news-stories/oceanic-stroke?utm_source=substack&utm_medium=email",
+        "primary_source": "https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(25)02097-5/abstract",
+        "other_sources": "https://www.bayer.com/en/us/news-stories/oceanic-stroke",
         "valence": "Good"
     },
     {
@@ -1780,7 +1810,7 @@
         "P(generalises)": "0.7",
         "big | true": 4.0,
         "big & true": 2.8,
-        "primary_source": "https://www.nature.com/articles/s42256-025-01056-0?ref=blog.jacobtrefethen.com",
+        "primary_source": "https://www.nature.com/articles/s42256-025-01056-0",
         "other_sources": "https://blog.jacobtrefethen.com/ai-optimism/",
         "valence": "Good"
     },
@@ -1856,7 +1886,7 @@
         "big | true": 3.0,
         "big & true": 2.7,
         "primary_source": "https://www.nature.com/articles/s41550-025-02513-x",
-        "other_sources": "https://www.sciencealert.com/planets-record-smashing-iron-wind-hides-a-climate-unlike-anything-weve-seen?ref=fixthenews.com",
+        "other_sources": "https://www.sciencealert.com/planets-record-smashing-iron-wind-hides-a-climate-unlike-anything-weve-seen",
         "valence": "Good"
     },
     {
@@ -1931,7 +1961,7 @@
         "big | true": 5.0,
         "big & true": 2.5,
         "primary_source": "https://arxiv.org/abs/2505.13400",
-        "other_sources": "https://theconversation.com/problematic-paper-screener-trawling-for-fraud-in-the-scientific-literature-246317?ref=blog.jacobtrefethen.com",
+        "other_sources": "https://theconversation.com/problematic-paper-screener-trawling-for-fraud-in-the-scientific-literature-246317",
         "valence": "Good"
     },
     {
@@ -2050,7 +2080,7 @@
         "P(generalises)": "0.8",
         "big | true": 3.0,
         "big & true": 2.4,
-        "primary_source": "https://onlinelibrary.wiley.com/doi/abs/10.1002/jhbs.70043?campaign=woletoc",
+        "primary_source": "https://onlinelibrary.wiley.com/doi/abs/10.1002/jhbs.70043",
         "other_sources": null,
         "valence": "Bad"
     },
@@ -2136,10 +2166,10 @@
         "subsub": null,
         "evidence": "Speculation",
         "summary": "Proposed 40% cut to the NIH estimated to kill 50% of new treatments",
-        "commentary": "The cuts to American science are unprecedented. The world is about to learn what it\u2019s like to fly without the engine. The model assumes that the 40% lowest-priority grants are the ones lost, which is not a foregone conclusion.",
-        "P(generalises)": "0.55",
+        "commentary": "The proposed cuts to American science are unprecedented, but it's not too late. The world is about to learn what it\u2019s like to fly without the engine. The model assumes that the 40% lowest-priority grants are the ones lost, which is not a foregone conclusion. This implies mild anticorrelation between the NIH's scoring and impact.",
+        "P(generalises)": "0.6",
         "big | true": 8.0,
-        "big & true": 4.4,
+        "big & true": 4.8,
         "primary_source": "https://www.science.org/doi/10.1126/science.aeb1564",
         "other_sources": null,
         "valence": "Bad"
@@ -2455,7 +2485,7 @@
         "P(generalises)": "0.3",
         "big | true": 6.0,
         "big & true": 1.8,
-        "primary_source": "https://pubs.acs.org/doi/10.1021/acsenergylett.5c01233?ref=pdf",
+        "primary_source": "https://pubs.acs.org/doi/10.1021/acsenergylett.5c01233",
         "other_sources": null,
         "valence": "Good"
     },
@@ -2532,7 +2562,7 @@
         "big & true": 1.5,
         "primary_source": "https://journals.aps.org/prl/abstract/10.1103/1plj-7p4z",
         "other_sources": null,
-        "valence": "-"
+        "valence": "Good"
     },
     {
         "year": 2025,
@@ -2607,7 +2637,7 @@
         "big & true": 1.25,
         "primary_source": "https://arxiv.org/abs/2511.09551",
         "other_sources": "https://scottaaronson.blog/?p=9325",
-        "valence": "-"
+        "valence": "Good"
     },
     {
         "year": 2025,
@@ -2770,7 +2800,7 @@
         "P(generalises)": "0.1",
         "big | true": 7.0,
         "big & true": 0.7,
-        "primary_source": "https://www.sciencedirect.com/science/article/pii/S0920379625000705?via=ihub",
+        "primary_source": "https://www.sciencedirect.com/science/article/pii/S0920379625000705",
         "other_sources": null,
         "valence": "Good"
     },
