@@ -17,6 +17,22 @@
     {
         "year": 2025,
         "category": "Biology",
+        "subcategory": "Zoology",
+        "subsub": "Marine biology",
+        "evidence": "Demo",
+        "summary": "A global pandemic has apparently wiped out sea urchin populations",
+        "commentary": "74% to 99.7% mortality in Diadema africanum in studied sites. Die-offs are not uncommon, but a second wave epidemic in 2023 appears to have disrupted their breeding. Urchins are crucial in controlling seaweed and algae blooms.",
+        "P(generalises)": "0.75",
+        "big | true": 5,
+        "big & true": 3.75,
+        "primary_source": "https://www.frontiersin.org/journals/marine-science/articles/10.3389/fmars.2025.1665504/full",
+        "other_sources": "",
+        "valence": "Bad"
+    },
+    https://www.frontiersin.org/journals/marine-science/articles/10.3389/fmars.2025.1665504/full
+    {
+        "year": 2025,
+        "category": "Biology",
         "subcategory": "Medicine",
         "subsub": "Oncology",
         "evidence": "RCT, etc",
