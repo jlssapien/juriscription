@@ -39,9 +39,6 @@ import Layout from "../layouts/Layout.astro";
           <th class="col-matched-product" data-sort="d">Closest Matched MHRA Product<span class="sort-icon"> ↕</span></th>
           <th data-sort="e">Matched INN Ingredient(s)<span class="sort-icon"> ↕</span></th>
           <th class="col-strength" data-sort="f">Matched Strength<span class="sort-icon"> ↕</span></th>
-          <th class="col-score" data-sort="g">INN Score<span class="sort-icon"> ↕</span></th>
-          <th class="col-score" data-sort="h">Str. Score<span class="sort-icon"> ↕</span></th>
-          <th class="col-score" data-sort="t">Total Score<span class="sort-icon"> ↓</span></th>
         </tr>
       </thead>
       <tbody id="table-body"></tbody>
@@ -62,8 +59,8 @@ import Layout from "../layouts/Layout.astro";
   let filtered: any[] = [];
   let renderedCount = 0;
   let currentSearch = "";
-  let sortField = "t";
-  let sortAsc = false;
+  let sortField = "a";
+  let sortAsc = true;
   let debounceTimer: any = null;
   let loading = false;
 
@@ -132,8 +129,7 @@ import Layout from "../layouts/Layout.astro";
         sortAsc = !sortAsc;
       } else {
         sortField = field;
-        // Score fields default descending; text fields default ascending
-        sortAsc = !["g", "h", "t"].includes(field);
+        sortAsc = true;
       }
       sortHeaders.forEach((h) => {
         const icon = h.querySelector(".sort-icon");
@@ -168,13 +164,7 @@ import Layout from "../layouts/Layout.astro";
   }
 
   function applySort() {
-    const scoreFields = new Set(["g", "h", "t"]);
     filtered.sort((a: any, b: any) => {
-      if (scoreFields.has(sortField)) {
-        const va = a[sortField] ?? -1;
-        const vb = b[sortField] ?? -1;
-        return sortAsc ? va - vb : vb - va;
-      }
       const va = (a[sortField] || "").toLowerCase();
       const vb = (b[sortField] || "").toLowerCase();
       if (va < vb) return sortAsc ? -1 : 1;
@@ -189,17 +179,10 @@ import Layout from "../layouts/Layout.astro";
     endOfResults.style.display = "none";
     resultCount.textContent = filtered.length.toLocaleString();
     if (filtered.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="9" class="empty-state">No matches found.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No matches found.</td></tr>`;
       return;
     }
     loadMore();
-  }
-
-  function scoreBar(val: number | undefined): string {
-    if (val === undefined || val === null) return "&mdash;";
-    const pct = Math.round(val * 100);
-    const color = pct >= 80 ? "#046c4e" : pct >= 50 ? "#b45309" : "#991b1b";
-    return `<div class="score-cell"><span class="score-val">${val.toFixed(4)}</span><div class="score-bar" style="width:${pct}%;background:${color}"></div></div>`;
   }
 
   function loadMore() {
@@ -220,10 +203,7 @@ import Layout from "../layouts/Layout.astro";
           <td class="col-strength">${esc(rec.c || "") || "&mdash;"}</td>
           <td class="col-matched-product"><div class="product-name">${esc(rec.d || "") || "&mdash;"}</div></td>
           <td>${esc(rec.e || "") || "&mdash;"}</td>
-          <td class="col-strength">${esc(rec.f || "") || "&mdash;"}</td>
-          <td class="col-score">${scoreBar(rec.g)}</td>
-          <td class="col-score">${scoreBar(rec.h)}</td>
-          <td class="col-score">${scoreBar(rec.t)}</td>`;
+          <td class="col-strength">${esc(rec.f || "") || "&mdash;"}</td>`;
         fragment.appendChild(tr);
       }
 
