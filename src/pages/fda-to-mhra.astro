@@ -1,0 +1,522 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="FDA → MHRA Matches">
+  <nav class="top-nav">
+    <div class="nav-left">
+      <a href="/drugs" class="site-name">MEDCHECKS</a>
+      <a href="/results" class="nav-link">RESULTS</a>
+      <a href="/fda-to-mhra" class="nav-link active">FDA → MHRA</a>
+      <a href="/mhra-to-fda" class="nav-link">MHRA → FDA</a>
+    </div>
+  </nav>
+
+  <div class="toolbar">
+    <input
+      type="text"
+      id="search"
+      placeholder="Search by source or matched product name"
+      autocomplete="off"
+    />
+    <div class="toolbar-right">
+      <span id="result-count" class="result-count"></span>
+    </div>
+  </div>
+
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading match data...</p>
+  </div>
+
+  <div class="table-wrapper" id="table-wrapper" style="display:none">
+    <table>
+      <thead>
+        <tr>
+          <th class="col-source-product" data-sort="a">FDA Product<span class="sort-icon"> ↕</span></th>
+          <th data-sort="b">INN Ingredient(s)<span class="sort-icon"> ↕</span></th>
+          <th class="col-strength" data-sort="c">FDA Strength<span class="sort-icon"> ↕</span></th>
+          <th class="col-matched-product" data-sort="d">Closest Matched MHRA Product<span class="sort-icon"> ↕</span></th>
+          <th data-sort="e">Matched INN Ingredient(s)<span class="sort-icon"> ↕</span></th>
+          <th class="col-strength" data-sort="f">Matched Strength<span class="sort-icon"> ↕</span></th>
+          <th class="col-score" data-sort="g">INN Score<span class="sort-icon"> ↕</span></th>
+          <th class="col-score" data-sort="h">Str. Score<span class="sort-icon"> ↕</span></th>
+          <th class="col-score" data-sort="t">Total Score<span class="sort-icon"> ↓</span></th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+    <div id="scroll-sentinel" class="scroll-sentinel"></div>
+    <div id="load-more-indicator" class="load-more-indicator" style="display:none">
+      <div class="spinner"></div>
+    </div>
+    <div id="end-of-results" class="end-of-results" style="display:none">
+      End of results
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const BATCH_SIZE = 100;
+  let allRecords: any[] = [];
+  let filtered: any[] = [];
+  let renderedCount = 0;
+  let currentSearch = "";
+  let sortField = "t";
+  let sortAsc = false;
+  let debounceTimer: any = null;
+  let loading = false;
+
+  const searchInput = document.getElementById("search") as HTMLInputElement;
+  const tableWrapper = document.getElementById("table-wrapper")!;
+  const tableBody = document.getElementById("table-body")!;
+  const loadingEl = document.getElementById("loading")!;
+  const resultCount = document.getElementById("result-count")!;
+  const sortHeaders = document.querySelectorAll("th[data-sort]");
+  const scrollSentinel = document.getElementById("scroll-sentinel")!;
+  const loadMoreIndicator = document.getElementById("load-more-indicator")!;
+  const endOfResults = document.getElementById("end-of-results")!;
+
+  const navEl = document.querySelector(".top-nav") as HTMLElement;
+  const toolbarEl = document.querySelector(".toolbar") as HTMLElement;
+
+  function updateHeaderLayout() {
+    const navH = navEl.offsetHeight;
+    const toolbarH = toolbarEl.offsetHeight;
+    const totalH = navH + toolbarH;
+    toolbarEl.style.top = navH + "px";
+    document.body.style.paddingTop = totalH + "px";
+    document.querySelectorAll("thead th").forEach((th) => {
+      (th as HTMLElement).style.top = totalH + "px";
+    });
+  }
+  updateHeaderLayout();
+  window.addEventListener("resize", updateHeaderLayout);
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && !loading && renderedCount < filtered.length) {
+        loadMore();
+      }
+    },
+    { rootMargin: "400px" }
+  );
+
+  fetch("/fda-to-mhra-index.json")
+    .then((r) => r.json())
+    .then((data) => {
+      allRecords = data;
+      loadingEl.style.display = "none";
+      tableWrapper.style.display = "block";
+      updateHeaderLayout();
+      applyFilters();
+      observer.observe(scrollSentinel);
+    })
+    .catch((err) => {
+      loadingEl.innerHTML = `<p style="color:#C7262C">Failed to load match data. Please refresh.</p>`;
+      console.error(err);
+    });
+
+  searchInput.addEventListener("input", () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      currentSearch = searchInput.value.trim().toLowerCase();
+      applyFilters();
+    }, 150);
+  });
+
+  sortHeaders.forEach((th) => {
+    th.addEventListener("click", () => {
+      const field = (th as HTMLElement).dataset.sort!;
+      if (sortField === field) {
+        sortAsc = !sortAsc;
+      } else {
+        sortField = field;
+        // Score fields default descending; text fields default ascending
+        sortAsc = !["g", "h", "t"].includes(field);
+      }
+      sortHeaders.forEach((h) => {
+        const icon = h.querySelector(".sort-icon");
+        if (icon) {
+          if ((h as HTMLElement).dataset.sort === sortField) {
+            icon.textContent = sortAsc ? " ↑" : " ↓";
+          } else {
+            icon.textContent = " ↕";
+          }
+        }
+      });
+      applySort();
+      resetAndRender();
+    });
+  });
+
+  function applyFilters() {
+    const query = currentSearch;
+    if (query) {
+      filtered = allRecords.filter((rec: any) => {
+        const src = (rec.a || "").toLowerCase();
+        const mat = (rec.d || "").toLowerCase();
+        const sinn = (rec.b || "").toLowerCase();
+        const minn = (rec.e || "").toLowerCase();
+        return src.includes(query) || mat.includes(query) || sinn.includes(query) || minn.includes(query);
+      });
+    } else {
+      filtered = allRecords.slice();
+    }
+    applySort();
+    resetAndRender();
+  }
+
+  function applySort() {
+    const scoreFields = new Set(["g", "h", "t"]);
+    filtered.sort((a: any, b: any) => {
+      if (scoreFields.has(sortField)) {
+        const va = a[sortField] ?? -1;
+        const vb = b[sortField] ?? -1;
+        return sortAsc ? va - vb : vb - va;
+      }
+      const va = (a[sortField] || "").toLowerCase();
+      const vb = (b[sortField] || "").toLowerCase();
+      if (va < vb) return sortAsc ? -1 : 1;
+      if (va > vb) return sortAsc ? 1 : -1;
+      return 0;
+    });
+  }
+
+  function resetAndRender() {
+    renderedCount = 0;
+    tableBody.innerHTML = "";
+    endOfResults.style.display = "none";
+    resultCount.textContent = filtered.length.toLocaleString();
+    if (filtered.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="9" class="empty-state">No matches found.</td></tr>`;
+      return;
+    }
+    loadMore();
+  }
+
+  function scoreBar(val: number | undefined): string {
+    if (val === undefined || val === null) return "&mdash;";
+    const pct = Math.round(val * 100);
+    const color = pct >= 80 ? "#046c4e" : pct >= 50 ? "#b45309" : "#991b1b";
+    return `<div class="score-cell"><span class="score-val">${val.toFixed(4)}</span><div class="score-bar" style="width:${pct}%;background:${color}"></div></div>`;
+  }
+
+  function loadMore() {
+    if (loading || renderedCount >= filtered.length) return;
+    loading = true;
+    loadMoreIndicator.style.display = "block";
+
+    requestAnimationFrame(() => {
+      const end = Math.min(renderedCount + BATCH_SIZE, filtered.length);
+      const fragment = document.createDocumentFragment();
+
+      for (let i = renderedCount; i < end; i++) {
+        const rec = filtered[i];
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="col-source-product"><div class="product-name">${esc(rec.a || "")}</div></td>
+          <td>${esc(rec.b || "") || "&mdash;"}</td>
+          <td class="col-strength">${esc(rec.c || "") || "&mdash;"}</td>
+          <td class="col-matched-product"><div class="product-name">${esc(rec.d || "") || "&mdash;"}</div></td>
+          <td>${esc(rec.e || "") || "&mdash;"}</td>
+          <td class="col-strength">${esc(rec.f || "") || "&mdash;"}</td>
+          <td class="col-score">${scoreBar(rec.g)}</td>
+          <td class="col-score">${scoreBar(rec.h)}</td>
+          <td class="col-score">${scoreBar(rec.t)}</td>`;
+        fragment.appendChild(tr);
+      }
+
+      tableBody.appendChild(fragment);
+      renderedCount = end;
+      loading = false;
+      loadMoreIndicator.style.display = "none";
+
+      if (renderedCount >= filtered.length) {
+        endOfResults.style.display = "block";
+      }
+    });
+  }
+
+  function esc(str: string): string {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+</script>
+
+<style is:global>
+  /* ===== Top Navigation ===== */
+  .top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #ccc;
+    background: white;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .site-name {
+    font-weight: 700;
+    border: 1px solid #333;
+    padding: 0.15rem 0.5rem;
+    color: var(--color-black);
+    text-decoration: none;
+  }
+
+  .nav-link {
+    color: var(--color-black);
+    text-decoration: none;
+  }
+
+  .nav-link.active {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .nav-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ===== Toolbar ===== */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid #ccc;
+    background: white;
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+
+  .toolbar input {
+    flex: 1;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid #ccc;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    background: white;
+    outline: none;
+  }
+
+  .toolbar input:focus {
+    border-color: #333;
+  }
+
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+  }
+
+  .result-count {
+    font-size: 0.8rem;
+    color: #999;
+    white-space: nowrap;
+  }
+
+  /* ===== Loading ===== */
+  .loading {
+    text-align: center;
+    padding: 4rem 0;
+    font-family: var(--font-mono);
+    color: var(--color-black);
+  }
+
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #ddd;
+    border-top-color: var(--color-black);
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ===== Table ===== */
+  .table-wrapper {
+    /* No overflow-x here — it breaks sticky thead positioning */
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.4;
+    min-width: 1100px;
+  }
+
+  thead {
+    z-index: 98;
+  }
+
+  th {
+    position: sticky;
+    z-index: 98;
+    text-align: left;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid #ccc;
+    border-top: none;
+    background: var(--color-grey);
+    font-weight: normal;
+    white-space: nowrap;
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  th:hover {
+    background: #ddd;
+  }
+
+  .sort-icon {
+    color: #999;
+    font-size: 0.75rem;
+  }
+
+  td {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+    background: white;
+    vertical-align: top;
+  }
+
+  /* Source product — sticky left */
+  .col-source-product {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    min-width: 220px;
+    max-width: 300px;
+    background: white;
+    border-right: 2px solid #bbb;
+  }
+
+  thead .col-source-product {
+    z-index: 111;
+    background: var(--color-grey);
+  }
+
+  .col-matched-product {
+    min-width: 220px;
+    max-width: 300px;
+  }
+
+  .col-strength {
+    min-width: 100px;
+    max-width: 160px;
+  }
+
+  .col-route {
+    min-width: 80px;
+  }
+
+  .col-score {
+    min-width: 110px;
+    white-space: nowrap;
+  }
+
+  .product-name {
+    font-weight: 500;
+  }
+
+  /* Score bar */
+  .score-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .score-val {
+    font-size: 0.78rem;
+  }
+
+  .score-bar {
+    height: 3px;
+    border-radius: 2px;
+    min-width: 2px;
+    max-width: 100%;
+  }
+
+  /* Alternating rows */
+  tbody tr:nth-child(even) td {
+    background: #fafafa;
+  }
+
+  tbody tr:nth-child(even) .col-source-product {
+    background: #fafafa;
+  }
+
+  tbody tr:hover td {
+    background: #f0f0f0;
+  }
+
+  tbody tr:hover .col-source-product {
+    background: #f0f0f0;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 0;
+    color: #999;
+    font-style: italic;
+  }
+
+  /* ===== Infinite Scroll ===== */
+  .scroll-sentinel {
+    height: 1px;
+  }
+
+  .load-more-indicator {
+    padding: 2rem 0;
+    text-align: center;
+  }
+
+  .end-of-results {
+    text-align: center;
+    padding: 1.5rem 0;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: #999;
+    border-top: 1px solid #ccc;
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .toolbar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+    }
+
+    .toolbar-right {
+      justify-content: flex-end;
+    }
+  }
+</style>

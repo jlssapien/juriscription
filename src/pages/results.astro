@@ -1,0 +1,93 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Results">
+  <nav class="top-nav">
+    <div class="nav-left">
+      <a href="/drugs" class="site-name">MEDCHECKS</a>
+      <a href="/results" class="nav-link active">RESULTS</a>
+      <a href="/fda-to-mhra" class="nav-link">FDA → MHRA</a>
+      <a href="/mhra-to-fda" class="nav-link">MHRA → FDA</a>
+    </div>
+  </nav>
+
+  <div class="results-body">
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+    <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+    <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
+    <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet.</p>
+  </div>
+</Layout>
+
+<style is:global>
+  /* ===== Top Navigation ===== */
+  .top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #ccc;
+    background: white;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .site-name {
+    font-weight: 700;
+    border: 1px solid #333;
+    padding: 0.15rem 0.5rem;
+    color: var(--color-black);
+    text-decoration: none;
+  }
+
+  .site-name:hover {
+    border-color: black;
+  }
+
+  .nav-link {
+    color: var(--color-black);
+    text-decoration: none;
+  }
+
+  .nav-link.active {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .nav-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ===== Page body ===== */
+  html, body {
+    background: white !important;
+    color: var(--color-black);
+  }
+
+  .results-body {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 6rem 2rem 4rem;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.8;
+    color: var(--color-black);
+  }
+
+  .results-body p {
+    margin-bottom: 1.5rem;
+  }
+</style>

@@ -1,5 +1,9 @@
 ---
 import "../assets/reset.css";
+interface Props {
+  title?: string;
+}
+const { title = "The Frontier in 2025" } = Astro.props;
 ---
 
 <!doctype html>
@@ -9,7 +13,7 @@ import "../assets/reset.css";
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.png" />
     <meta name="generator" content={Astro.generator} />
-    <title>The Frontier in 2025</title>
+    <title>{title}</title>
   </head>
   <body>
     <slot />
