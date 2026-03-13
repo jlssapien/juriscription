@@ -5,10 +5,10 @@ import Layout from "../layouts/Layout.astro";
 <Layout title="Results">
   <nav class="top-nav">
     <div class="nav-left">
-      <a href="/drugs" class="site-name">MEDCHECKS</a>
+      <a href="/drugs" class="site-name">JURISCRIPTION</a>
       <a href="/results" class="nav-link active">RESULTS</a>
-      <a href="/fda-to-mhra" class="nav-link">FDA → MHRA</a>
-      <a href="/mhra-to-fda" class="nav-link">MHRA → FDA</a>
+      <a href="/fda-to-mhra" class="nav-link" data-nav-tip="This sheet matches each drug in the FDA dataset to the closest drug (based on ingredients and dosage) in the MHRA dataset.">FDA → MHRA</a>
+      <a href="/mhra-to-fda" class="nav-link" data-nav-tip="This sheet matches each drug in the MHRA dataset to the closest drug (based on ingredients and dosage) in the FDA dataset.">MHRA → FDA</a>
     </div>
   </nav>
 
@@ -19,6 +19,33 @@ import Layout from "../layouts/Layout.astro";
     <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet.</p>
   </div>
 </Layout>
+
+<script>
+  const navTooltip = document.createElement("div");
+  navTooltip.className = "nav-tooltip";
+  navTooltip.style.display = "none";
+  document.body.appendChild(navTooltip);
+
+  document.querySelectorAll(".nav-link[data-nav-tip]").forEach((link) => {
+    link.addEventListener("mouseenter", () => {
+      const tip = (link as HTMLElement).dataset.navTip;
+      if (!tip) return;
+      navTooltip.textContent = tip;
+      navTooltip.style.display = "block";
+      const rect = (link as HTMLElement).getBoundingClientRect();
+      const pad = 4;
+      let x = rect.left;
+      const y = rect.bottom + pad;
+      const tw = navTooltip.offsetWidth;
+      if (x + tw > window.innerWidth - pad) x = window.innerWidth - tw - pad;
+      navTooltip.style.left = x + "px";
+      navTooltip.style.top = y + "px";
+    });
+    link.addEventListener("mouseleave", () => {
+      navTooltip.style.display = "none";
+    });
+  });
+</script>
 
 <style is:global>
   /* ===== Top Navigation ===== */
@@ -89,5 +116,20 @@ import Layout from "../layouts/Layout.astro";
 
   .results-body p {
     margin-bottom: 1.5rem;
+  }
+
+  /* ===== Nav Tooltip ===== */
+  .nav-tooltip {
+    position: fixed;
+    z-index: 200;
+    max-width: 300px;
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    pointer-events: none;
+    border: 1px solid #ccc;
+    background: var(--color-grey);
+    color: var(--color-black);
   }
 </style>

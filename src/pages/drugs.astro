@@ -5,29 +5,30 @@ import Layout from "../layouts/Layout.astro";
 <Layout title="Drug Database">
   <nav class="top-nav">
     <div class="nav-left">
-      <a href="/drugs" class="site-name">MEDCHECKS</a>
+      <a href="/drugs" class="site-name">JURISCRIPTION</a>
       <a href="/results" class="nav-link">RESULTS</a>
-      <a href="/fda-to-mhra" class="nav-link">FDA → MHRA</a>
-      <a href="/mhra-to-fda" class="nav-link">MHRA → FDA</a>
+      <a href="/fda-to-mhra" class="nav-link" data-nav-tip="This sheet matches each drug in the FDA dataset to the closest drug (based on ingredients and dosage) in the MHRA dataset.">FDA → MHRA</a>
+      <a href="/mhra-to-fda" class="nav-link" data-nav-tip="This sheet matches each drug in the MHRA dataset to the closest drug (based on ingredients and dosage) in the FDA dataset.">MHRA → FDA</a>
     </div>
   </nav>
 
   <div class="toolbar">
-    <input
-      type="text"
-      id="search"
-      placeholder="Search by product name or ingredients"
-      autocomplete="off"
-    />
-    <div class="toolbar-right">
-      <div class="country-dropdown" id="country-dropdown">
-        <button class="country-dropdown-btn" id="country-dropdown-btn">Country <span class="dropdown-arrow">▾</span></button>
-        <div class="country-dropdown-menu" id="country-dropdown-menu">
-          <div class="country-dropdown-header">
-            <button class="country-select-action" id="country-select-all">Select all</button>
-            <button class="country-select-action" id="country-clear-all">Clear</button>
+    <div class="toolbar-left">
+      <div class="filters-dropdown" id="filters-dropdown">
+        <button class="filters-dropdown-btn" id="filters-dropdown-btn">Filters <span class="dropdown-arrow">▾</span></button>
+        <div class="filters-dropdown-menu" id="filters-dropdown-menu">
+          <div class="filter-section-header">
+            <span class="filter-section-label">Country</span>
+            <button class="filter-action-btn" id="country-select-all">Select all</button>
+            <button class="filter-action-btn" id="country-clear-all">Clear</button>
           </div>
-          <div class="country-dropdown-list" id="country-dropdown-list"></div>
+          <div class="filter-option-list" id="country-filter-list"></div>
+          <div class="filter-section-header filter-section-sep">
+            <span class="filter-section-label">Route</span>
+            <button class="filter-action-btn" id="route-select-all">Select all</button>
+            <button class="filter-action-btn" id="route-clear-all">Clear</button>
+          </div>
+          <div class="filter-option-list" id="route-filter-list"></div>
         </div>
       </div>
       <div class="region-buttons">
@@ -38,6 +39,12 @@ import Layout from "../layouts/Layout.astro";
       </div>
       <span id="result-count" class="result-count"></span>
     </div>
+    <input
+      type="text"
+      id="search"
+      placeholder="Search by product name or ingredients"
+      autocomplete="off"
+    />
   </div>
 
   <div id="loading" class="loading">
@@ -154,6 +161,32 @@ import Layout from "../layouts/Layout.astro";
     }, 100);
   }
 
+  // Nav link tooltips
+  const navTooltip = document.createElement("div");
+  navTooltip.className = "status-tooltip tooltip-dark";
+  navTooltip.style.display = "none";
+  document.body.appendChild(navTooltip);
+
+  document.querySelectorAll(".nav-link[data-nav-tip]").forEach((link) => {
+    link.addEventListener("mouseenter", () => {
+      const tip = (link as HTMLElement).dataset.navTip;
+      if (!tip) return;
+      navTooltip.textContent = tip;
+      navTooltip.style.display = "block";
+      const rect = (link as HTMLElement).getBoundingClientRect();
+      const pad = 4;
+      let x = rect.left;
+      const y = rect.bottom + pad;
+      const tw = navTooltip.offsetWidth;
+      if (x + tw > window.innerWidth - pad) x = window.innerWidth - tw - pad;
+      navTooltip.style.left = x + "px";
+      navTooltip.style.top = y + "px";
+    });
+    link.addEventListener("mouseleave", () => {
+      navTooltip.style.display = "none";
+    });
+  });
+
   // Event delegation for status cell hover
   document.addEventListener("mouseover", (e) => {
     const target = (e.target as HTMLElement).closest("td.col-status");
@@ -180,6 +213,7 @@ import Layout from "../layouts/Layout.astro";
   let debounceTimer: any = null;
   let loading = false;
   let selectedCountries: Set<string> = new Set();
+  let selectedRoutes: Set<string> = new Set();
 
   // DOM refs
   const searchInput = document.getElementById("search") as HTMLInputElement;
@@ -192,11 +226,14 @@ import Layout from "../layouts/Layout.astro";
   const scrollSentinel = document.getElementById("scroll-sentinel")!;
   const loadMoreIndicator = document.getElementById("load-more-indicator")!;
   const endOfResults = document.getElementById("end-of-results")!;
-  const countryDropdownBtn = document.getElementById("country-dropdown-btn")!;
-  const countryDropdownMenu = document.getElementById("country-dropdown-menu")!;
-  const countryDropdownList = document.getElementById("country-dropdown-list")!;
+  const filtersDropdownBtn = document.getElementById("filters-dropdown-btn")!;
+  const filtersDropdownMenu = document.getElementById("filters-dropdown-menu")!;
+  const countryFilterList = document.getElementById("country-filter-list")!;
   const countrySelectAll = document.getElementById("country-select-all")!;
   const countryClearAll = document.getElementById("country-clear-all")!;
+  const routeFilterList = document.getElementById("route-filter-list")!;
+  const routeSelectAll = document.getElementById("route-select-all")!;
+  const routeClearAll = document.getElementById("route-clear-all")!;
 
   // Measure actual nav + toolbar heights for fixed header + sticky thead
   const navEl = document.querySelector(".top-nav") as HTMLElement;
@@ -232,7 +269,7 @@ import Layout from "../layouts/Layout.astro";
     .then((r) => r.json())
     .then((data) => {
       allDrugs = data;
-      buildCountryDropdown(data);
+      buildFilters(data);
       loadingEl.style.display = "none";
       tableWrapper.style.display = "block";
       updateHeaderLayout();
@@ -289,77 +326,117 @@ import Layout from "../layouts/Layout.astro";
     });
   });
 
-  // --- Country dropdown ---
-  function buildCountryDropdown(data: any[]) {
+  // --- Filters dropdown (Country + Route) ---
+  function buildFilters(data: any[]) {
+    // Build country list
     const countrySet = new Set<string>();
     for (const d of data) {
-      for (const c of (d.o || [])) {
-        countrySet.add(c);
-      }
+      for (const c of (d.o || [])) countrySet.add(c);
     }
-    const countries = Array.from(countrySet).sort();
-    countryDropdownList.innerHTML = "";
-    for (const country of countries) {
+    countryFilterList.innerHTML = "";
+    for (const country of Array.from(countrySet).sort()) {
       const label = document.createElement("label");
-      label.className = "country-option";
+      label.className = "filter-option";
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.value = country;
       cb.addEventListener("change", () => {
-        if (cb.checked) {
-          selectedCountries.add(country);
-        } else {
-          selectedCountries.delete(country);
-        }
-        updateCountryBtnLabel();
+        if (cb.checked) selectedCountries.add(country);
+        else selectedCountries.delete(country);
+        updateFiltersBtnLabel();
         applyFilters();
       });
       label.appendChild(cb);
       label.appendChild(document.createTextNode(" " + country));
-      countryDropdownList.appendChild(label);
+      countryFilterList.appendChild(label);
+    }
+
+    // Build route list from individual terms
+    const routeTermSet = new Set<string>();
+    for (const d of data) {
+      for (const term of (d.f || "").split(" | ")) {
+        const t = term.trim();
+        if (t) routeTermSet.add(t);
+      }
+    }
+    routeFilterList.innerHTML = "";
+    for (const route of Array.from(routeTermSet).sort()) {
+      const label = document.createElement("label");
+      label.className = "filter-option";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.value = route;
+      cb.addEventListener("change", () => {
+        if (cb.checked) selectedRoutes.add(route);
+        else selectedRoutes.delete(route);
+        updateFiltersBtnLabel();
+        applyFilters();
+      });
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(" " + route));
+      routeFilterList.appendChild(label);
     }
   }
 
-  function updateCountryBtnLabel() {
-    const n = selectedCountries.size;
+  function updateFiltersBtnLabel() {
+    const n = selectedCountries.size + selectedRoutes.size;
     const arrow = '<span class="dropdown-arrow">▾</span>';
     if (n === 0) {
-      countryDropdownBtn.innerHTML = `Country ${arrow}`;
+      filtersDropdownBtn.innerHTML = `Filters ${arrow}`;
     } else {
-      countryDropdownBtn.innerHTML = `Country (${n}) ${arrow}`;
+      filtersDropdownBtn.innerHTML = `Filters (${n}) ${arrow}`;
     }
   }
 
   // Toggle dropdown
-  countryDropdownBtn.addEventListener("click", (e) => {
+  filtersDropdownBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    const isOpen = countryDropdownMenu.classList.toggle("open");
+    const isOpen = filtersDropdownMenu.classList.toggle("open");
     if (isOpen) updateHeaderLayout();
   });
 
   // Close dropdown when clicking outside
   document.addEventListener("click", (e) => {
-    if (!(e.target as HTMLElement).closest("#country-dropdown")) {
-      countryDropdownMenu.classList.remove("open");
+    if (!(e.target as HTMLElement).closest("#filters-dropdown")) {
+      filtersDropdownMenu.classList.remove("open");
     }
   });
 
-  // Select all / Clear
+  // Country select all / clear
   countrySelectAll.addEventListener("click", () => {
-    countryDropdownList.querySelectorAll("input[type=checkbox]").forEach((cb: any) => {
+    countryFilterList.querySelectorAll("input[type=checkbox]").forEach((cb: any) => {
       cb.checked = true;
       selectedCountries.add(cb.value);
     });
-    updateCountryBtnLabel();
+    updateFiltersBtnLabel();
     applyFilters();
   });
 
   countryClearAll.addEventListener("click", () => {
-    countryDropdownList.querySelectorAll("input[type=checkbox]").forEach((cb: any) => {
+    countryFilterList.querySelectorAll("input[type=checkbox]").forEach((cb: any) => {
       cb.checked = false;
     });
     selectedCountries.clear();
-    updateCountryBtnLabel();
+    updateFiltersBtnLabel();
+    applyFilters();
+  });
+
+  // Route select all / clear
+  routeSelectAll.addEventListener("click", () => {
+    routeFilterList.querySelectorAll("input[type=checkbox]").forEach((cb: any) => {
+      cb.checked = true;
+      selectedRoutes.add(cb.value);
+    });
+    updateFiltersBtnLabel();
+    applyFilters();
+  });
+
+  routeClearAll.addEventListener("click", () => {
+    routeFilterList.querySelectorAll("input[type=checkbox]").forEach((cb: any) => {
+      cb.checked = false;
+    });
+    selectedRoutes.clear();
+    updateFiltersBtnLabel();
     applyFilters();
   });
 
@@ -367,12 +444,17 @@ import Layout from "../layouts/Layout.astro";
     const query = currentSearch;
     const region = currentRegion;
     const hasCountryFilter = selectedCountries.size > 0;
+    const hasRouteFilter = selectedRoutes.size > 0;
 
     filtered = allDrugs.filter((drug: any) => {
       if (region !== "all" && drug.r !== region) return false;
       if (hasCountryFilter) {
         const countries: string[] = drug.o || [];
         if (!countries.some(c => selectedCountries.has(c))) return false;
+      }
+      if (hasRouteFilter) {
+        const routeTerms = (drug.f || "").split(" | ").map((t: string) => t.trim());
+        if (!routeTerms.some((t: string) => selectedRoutes.has(t))) return false;
       }
       if (query) {
         const name = (drug.n || "").toLowerCase();
@@ -487,7 +569,7 @@ import Layout from "../layouts/Layout.astro";
     top: 0;
     left: 0;
     right: 0;
-    z-index: 100;
+    z-index: 120;
   }
 
   .nav-left {
@@ -533,6 +615,7 @@ import Layout from "../layouts/Layout.astro";
     z-index: 99;
     font-family: var(--font-mono);
     font-size: 0.85rem;
+    z-index: 115;
   }
 
   .toolbar input {
@@ -549,7 +632,7 @@ import Layout from "../layouts/Layout.astro";
     border-color: #333;
   }
 
-  .toolbar-right {
+  .toolbar-left {
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -591,12 +674,12 @@ import Layout from "../layouts/Layout.astro";
     white-space: nowrap;
   }
 
-  /* ===== Country Dropdown ===== */
-  .country-dropdown {
+  /* ===== Filters Dropdown ===== */
+  .filters-dropdown {
     position: relative;
   }
 
-  .country-dropdown-btn {
+  .filters-dropdown-btn {
     padding: 0.25rem 0.6rem;
     border: 1px solid #ccc;
     background: white;
@@ -606,7 +689,7 @@ import Layout from "../layouts/Layout.astro";
     white-space: nowrap;
   }
 
-  .country-dropdown-btn:hover {
+  .filters-dropdown-btn:hover {
     background: #eee;
   }
 
@@ -615,7 +698,7 @@ import Layout from "../layouts/Layout.astro";
     color: #999;
   }
 
-  .country-dropdown-menu {
+  .filters-dropdown-menu {
     display: none;
     position: absolute;
     top: 100%;
@@ -624,26 +707,38 @@ import Layout from "../layouts/Layout.astro";
     background: white;
     border: 1px solid #ccc;
     z-index: 150;
-    min-width: 240px;
-    max-height: 360px;
+    min-width: 260px;
+    max-height: 480px;
     overflow-y: auto;
     font-family: var(--font-mono);
     font-size: 0.8rem;
   }
 
-  .country-dropdown-menu.open {
+  .filters-dropdown-menu.open {
     display: block;
   }
 
-  .country-dropdown-header {
+  .filter-section-header {
     display: flex;
-    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
     padding: 0.4rem 0.6rem;
     border-bottom: 1px solid #ccc;
     background: var(--color-grey);
   }
 
-  .country-select-action {
+  .filter-section-sep {
+    border-top: 1px solid #ccc;
+  }
+
+  .filter-section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    flex: 1;
+  }
+
+  .filter-action-btn {
     background: none;
     border: none;
     cursor: pointer;
@@ -655,22 +750,27 @@ import Layout from "../layouts/Layout.astro";
     text-underline-offset: 2px;
   }
 
-  .country-select-action:hover {
+  .filter-action-btn:hover {
     color: var(--color-black);
   }
 
-  .country-option {
+  .filter-option-list {
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  .filter-option {
     display: block;
     padding: 0.3rem 0.6rem;
     cursor: pointer;
     white-space: nowrap;
   }
 
-  .country-option:hover {
+  .filter-option:hover {
     background: #f0f0f0;
   }
 
-  .country-option input[type="checkbox"] {
+  .filter-option input[type="checkbox"] {
     margin-right: 0.4rem;
     vertical-align: middle;
   }
@@ -907,7 +1007,7 @@ import Layout from "../layouts/Layout.astro";
       gap: 0.5rem;
     }
 
-    .toolbar-right {
+    .toolbar-left {
       justify-content: space-between;
     }
 
