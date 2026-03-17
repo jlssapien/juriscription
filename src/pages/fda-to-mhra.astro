@@ -7,6 +7,7 @@ import Layout from "../layouts/Layout.astro";
     <div class="nav-left">
       <a href="/drugs" class="site-name">JURISCRIPTION</a>
       <a href="/results" class="nav-link">RESULTS</a>
+      <a href="/methods" class="nav-link">METHODS</a>
       <a href="/fda-to-mhra" class="nav-link active" data-nav-tip="This sheet matches each drug in the FDA dataset to the closest drug (based on ingredients and dosage) in the MHRA dataset.">FDA → MHRA</a>
       <a href="/mhra-to-fda" class="nav-link" data-nav-tip="This sheet matches each drug in the MHRA dataset to the closest drug (based on ingredients and dosage) in the FDA dataset.">MHRA → FDA</a>
     </div>
@@ -21,6 +22,12 @@ import Layout from "../layouts/Layout.astro";
     />
     <div class="toolbar-right">
       <span id="result-count" class="result-count"></span>
+      <span class="conf-legend">
+        <button class="legend-item active" data-conf="HIGH"><span class="legend-dot dot-high"></span>HIGH</button>
+        <button class="legend-item active" data-conf="MEDIUM"><span class="legend-dot dot-medium"></span>MEDIUM</button>
+        <button class="legend-item active" data-conf="LOW"><span class="legend-dot dot-low"></span>LOW</button>
+        <button class="legend-item active" data-conf="NONE"><span class="legend-dot dot-none"></span>NO MATCH</button>
+      </span>
     </div>
   </div>
 
@@ -33,12 +40,13 @@ import Layout from "../layouts/Layout.astro";
     <table>
       <thead>
         <tr>
-          <th class="col-source-product" data-sort="a">FDA Product<span class="sort-icon"> ↕</span></th>
-          <th data-sort="b">INN Ingredient(s)<span class="sort-icon"> ↕</span></th>
-          <th class="col-strength" data-sort="c">FDA Strength<span class="sort-icon"> ↕</span></th>
-          <th class="col-matched-product" data-sort="d">Closest Matched MHRA Product<span class="sort-icon"> ↕</span></th>
-          <th data-sort="e">Matched INN Ingredient(s)<span class="sort-icon"> ↕</span></th>
-          <th class="col-strength" data-sort="f">Matched Strength<span class="sort-icon"> ↕</span></th>
+          <th class="col-source-product" data-sort="a" data-col-tip="The brand or trade name of the drug as listed in the FDA Orange Book.">FDA Product<span class="sort-icon"> ↕</span></th>
+          <th data-sort="b" data-col-tip="The International Nonproprietary Name(s) — the generic active ingredient(s) of the FDA source product.">INN Ingredient(s)<span class="sort-icon"> ↕</span></th>
+          <th class="col-strength" data-sort="c" data-col-tip="The dose or concentration of the active ingredient(s) in the FDA product.">FDA Strength<span class="sort-icon"> ↕</span></th>
+          <th class="col-matched-product" data-sort="d" data-col-tip="The MHRA-authorised product judged most similar to the FDA source, scored on ingredient and strength similarity.">Closest Matched MHRA Product<span class="sort-icon"> ↕</span></th>
+          <th data-sort="e" data-col-tip="The active ingredient(s) of the matched MHRA product.">Matched INN Ingredient(s)<span class="sort-icon"> ↕</span></th>
+          <th class="col-strength" data-sort="f" data-col-tip="The dose or concentration of the matched MHRA product.">Matched Strength<span class="sort-icon"> ↕</span></th>
+          <th class="col-confidence" data-col-tip="Match quality: HIGH = exact ingredient and close strength; MEDIUM = same ingredient, weaker strength match; LOW = partial or approximate match.">Confidence</th>
         </tr>
       </thead>
       <tbody id="table-body"></tbody>
@@ -54,9 +62,14 @@ import Layout from "../layouts/Layout.astro";
 </Layout>
 
 <script>
-  const BATCH_SIZE = 100;
-  let allRecords: any[] = [];
-  let filtered: any[] = [];
+  const BATCH_SIZE = 50;
+
+  type Rec = Record<string, any>;
+  interface Group { primary: Rec; secondaries: Rec[]; autoExpand: boolean; }
+
+  let allRecords: Rec[] = [];
+  let allGroups: Group[] = [];
+  let renderedGroups: Group[] = [];
   let renderedCount = 0;
   let currentSearch = "";
   let sortField = "a";
@@ -77,6 +90,33 @@ import Layout from "../layouts/Layout.astro";
   const navEl = document.querySelector(".top-nav") as HTMLElement;
   const toolbarEl = document.querySelector(".toolbar") as HTMLElement;
 
+  // Confidence filter state — all active by default
+  const activeFilters = new Set<string>(["HIGH", "MEDIUM", "LOW", "NONE"]);
+  const legendButtons = document.querySelectorAll<HTMLElement>(".legend-item[data-conf]");
+
+  legendButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const conf = btn.dataset.conf!;
+      if (activeFilters.has(conf)) {
+        // If this is the only active filter, reset all to active
+        if (activeFilters.size === 1) {
+          activeFilters.add("HIGH");
+          activeFilters.add("MEDIUM");
+          activeFilters.add("LOW");
+          activeFilters.add("NONE");
+          legendButtons.forEach((b) => b.classList.add("active"));
+        } else {
+          activeFilters.delete(conf);
+          btn.classList.remove("active");
+        }
+      } else {
+        activeFilters.add(conf);
+        btn.classList.add("active");
+      }
+      applyFilters();
+    });
+  });
+
   function updateHeaderLayout() {
     const navH = navEl.offsetHeight;
     const toolbarH = toolbarEl.offsetHeight;
@@ -92,7 +132,7 @@ import Layout from "../layouts/Layout.astro";
 
   const observer = new IntersectionObserver(
     (entries) => {
-      if (entries[0].isIntersecting && !loading && renderedCount < filtered.length) {
+      if (entries[0].isIntersecting && !loading && renderedCount < renderedGroups.length) {
         loadMore();
       }
     },
@@ -103,6 +143,7 @@ import Layout from "../layouts/Layout.astro";
     .then((r) => r.json())
     .then((data) => {
       allRecords = data;
+      allGroups = buildGroups(allRecords);
       loadingEl.style.display = "none";
       tableWrapper.style.display = "block";
       updateHeaderLayout();
@@ -125,6 +166,7 @@ import Layout from "../layouts/Layout.astro";
   sortHeaders.forEach((th) => {
     th.addEventListener("click", () => {
       const field = (th as HTMLElement).dataset.sort!;
+      if (!field) return; // confidence column has no data-sort
       if (sortField === field) {
         sortAsc = !sortAsc;
       } else {
@@ -146,27 +188,76 @@ import Layout from "../layouts/Layout.astro";
     });
   });
 
+  // Toggle secondary rows via event delegation
+  tableBody.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest(".toggle-btn") as HTMLElement | null;
+    if (!btn) return;
+    const groupId = btn.dataset.group!;
+    const count = btn.dataset.count!;
+    const expanded = btn.getAttribute("aria-expanded") === "true";
+    const newExpanded = !expanded;
+    btn.setAttribute("aria-expanded", String(newExpanded));
+    btn.textContent = (newExpanded ? "▼" : "▶") + " +" + count;
+    tableBody.querySelectorAll<HTMLTableRowElement>(`tr.secondary-row[data-group="${groupId}"]`).forEach((tr) => {
+      tr.style.display = newExpanded ? "" : "none";
+    });
+  });
+
+  function buildGroups(records: Rec[]): Group[] {
+    const map = new Map<string, Group>();
+    for (const rec of records) {
+      const key = (rec.a || "").toLowerCase();
+      if (!map.has(key)) {
+        map.set(key, { primary: rec, secondaries: [], autoExpand: false });
+      } else {
+        const g = map.get(key)!;
+        if ((rec.t ?? 0) > (g.primary.t ?? 0)) {
+          g.secondaries.push(g.primary);
+          g.primary = rec;
+        } else {
+          g.secondaries.push(rec);
+        }
+      }
+    }
+    return Array.from(map.values());
+  }
+
+  function recMatchesQuery(rec: Rec, query: string): boolean {
+    return (
+      (rec.a || "").toLowerCase().includes(query) ||
+      (rec.d || "").toLowerCase().includes(query) ||
+      (rec.b || "").toLowerCase().includes(query) ||
+      (rec.e || "").toLowerCase().includes(query)
+    );
+  }
+
   function applyFilters() {
     const query = currentSearch;
+    const confFiltered =
+      activeFilters.size === 4
+        ? allGroups
+        : allGroups.filter((g) => activeFilters.has(g.primary.k || ""));
+
     if (query) {
-      filtered = allRecords.filter((rec: any) => {
-        const src = (rec.a || "").toLowerCase();
-        const mat = (rec.d || "").toLowerCase();
-        const sinn = (rec.b || "").toLowerCase();
-        const minn = (rec.e || "").toLowerCase();
-        return src.includes(query) || mat.includes(query) || sinn.includes(query) || minn.includes(query);
-      });
+      renderedGroups = [];
+      for (const g of confFiltered) {
+        const primaryMatches = recMatchesQuery(g.primary, query);
+        const anySecondaryMatches = g.secondaries.some((r) => recMatchesQuery(r, query));
+        if (primaryMatches || anySecondaryMatches) {
+          renderedGroups.push({ ...g, autoExpand: !primaryMatches && anySecondaryMatches });
+        }
+      }
     } else {
-      filtered = allRecords.slice();
+      renderedGroups = confFiltered.map((g) => ({ ...g, autoExpand: false }));
     }
     applySort();
     resetAndRender();
   }
 
   function applySort() {
-    filtered.sort((a: any, b: any) => {
-      const va = (a[sortField] || "").toLowerCase();
-      const vb = (b[sortField] || "").toLowerCase();
+    renderedGroups.sort((a, b) => {
+      const va = (a.primary[sortField] || "").toLowerCase();
+      const vb = (b.primary[sortField] || "").toLowerCase();
       if (va < vb) return sortAsc ? -1 : 1;
       if (va > vb) return sortAsc ? 1 : -1;
       return 0;
@@ -177,34 +268,28 @@ import Layout from "../layouts/Layout.astro";
     renderedCount = 0;
     tableBody.innerHTML = "";
     endOfResults.style.display = "none";
-    resultCount.textContent = filtered.length.toLocaleString();
-    if (filtered.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No matches found.</td></tr>`;
+    const totalMatches = renderedGroups.reduce((acc, g) => acc + 1 + g.secondaries.length, 0);
+    resultCount.textContent = totalMatches.toLocaleString() + " matches";
+    if (renderedGroups.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No matches found.</td></tr>`;
       return;
     }
     loadMore();
   }
 
   function loadMore() {
-    if (loading || renderedCount >= filtered.length) return;
+    if (loading || renderedCount >= renderedGroups.length) return;
     loading = true;
     loadMoreIndicator.style.display = "block";
 
     requestAnimationFrame(() => {
-      const end = Math.min(renderedCount + BATCH_SIZE, filtered.length);
+      const end = Math.min(renderedCount + BATCH_SIZE, renderedGroups.length);
       const fragment = document.createDocumentFragment();
 
       for (let i = renderedCount; i < end; i++) {
-        const rec = filtered[i];
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="col-source-product"><div class="product-name">${esc(rec.a || "")}</div></td>
-          <td>${esc(rec.b || "") || "&mdash;"}</td>
-          <td class="col-strength">${esc(rec.c || "") || "&mdash;"}</td>
-          <td class="col-matched-product"><div class="product-name">${esc(rec.d || "") || "&mdash;"}</div></td>
-          <td>${esc(rec.e || "") || "&mdash;"}</td>
-          <td class="col-strength">${esc(rec.f || "") || "&mdash;"}</td>`;
-        fragment.appendChild(tr);
+        const g = renderedGroups[i];
+        const groupId = "g" + i + "_" + renderedCount;
+        appendGroupRows(fragment, g, groupId);
       }
 
       tableBody.appendChild(fragment);
@@ -212,10 +297,69 @@ import Layout from "../layouts/Layout.astro";
       loading = false;
       loadMoreIndicator.style.display = "none";
 
-      if (renderedCount >= filtered.length) {
+      if (renderedCount >= renderedGroups.length) {
         endOfResults.style.display = "block";
       }
     });
+  }
+
+  function confClass(rec: Rec): string {
+    const k = rec.k || "";
+    if (k === "HIGH") return "conf-high";
+    if (k === "MEDIUM") return "conf-medium";
+    if (k === "LOW") return "conf-low";
+    if (k === "NONE") return "conf-none";
+    return "";
+  }
+
+  function confBadge(rec: Rec): string {
+    const k = rec.k || "";
+    if (!k) return "&mdash;";
+    return `<span class="conf-badge conf-badge-${k.toLowerCase()}">${k}</span>`;
+  }
+
+  function appendGroupRows(fragment: DocumentFragment, g: Group, groupId: string) {
+    // Primary row
+    const primaryTr = document.createElement("tr");
+    const cc = confClass(g.primary);
+    if (cc) primaryTr.classList.add(cc);
+
+    let toggleBtn = "";
+    if (g.secondaries.length > 0) {
+      const count = g.secondaries.length;
+      const expanded = g.autoExpand;
+      toggleBtn = `<button class="toggle-btn" data-group="${groupId}" data-count="${count}" aria-expanded="${expanded}">${expanded ? "▼" : "▶"} +${count}</button>`;
+    }
+
+    primaryTr.innerHTML = `
+      <td class="col-source-product"><div class="source-cell"><div class="product-name">${esc(g.primary.a || "")}</div>${toggleBtn ? `<div class="toggle-row">${toggleBtn}</div>` : ""}</div></td>
+      <td>${esc(g.primary.b || "") || "&mdash;"}</td>
+      <td class="col-strength">${esc(g.primary.c || "") || "&mdash;"}</td>
+      <td class="col-matched-product"><div class="product-name">${esc(g.primary.d || "") || "&mdash;"}</div></td>
+      <td>${esc(g.primary.e || "") || "&mdash;"}</td>
+      <td class="col-strength">${esc(g.primary.f || "") || "&mdash;"}</td>
+      <td class="col-confidence">${confBadge(g.primary)}</td>`;
+    fragment.appendChild(primaryTr);
+
+    // Secondary rows
+    for (const sec of g.secondaries) {
+      const secTr = document.createElement("tr");
+      const scc = confClass(sec);
+      if (scc) secTr.classList.add(scc);
+      secTr.classList.add("secondary-row");
+      secTr.dataset.group = groupId;
+      if (!g.autoExpand) secTr.style.display = "none";
+
+      secTr.innerHTML = `
+        <td class="col-source-product"><div class="product-name secondary-name">↳ ${esc(sec.a || "")}</div></td>
+        <td>${esc(sec.b || "") || "&mdash;"}</td>
+        <td class="col-strength">${esc(sec.c || "") || "&mdash;"}</td>
+        <td class="col-matched-product"><div class="product-name">${esc(sec.d || "") || "&mdash;"}</div></td>
+        <td>${esc(sec.e || "") || "&mdash;"}</td>
+        <td class="col-strength">${esc(sec.f || "") || "&mdash;"}</td>
+        <td class="col-confidence">${confBadge(sec)}</td>`;
+      fragment.appendChild(secTr);
+    }
   }
 
   function esc(str: string): string {
@@ -223,6 +367,32 @@ import Layout from "../layouts/Layout.astro";
     div.textContent = str;
     return div.innerHTML;
   }
+
+  // Column header tooltips
+  const colTooltip = document.createElement("div");
+  colTooltip.className = "col-tooltip";
+  colTooltip.style.display = "none";
+  document.body.appendChild(colTooltip);
+
+  document.querySelectorAll("th[data-col-tip]").forEach((th) => {
+    th.addEventListener("mouseenter", () => {
+      const tip = (th as HTMLElement).dataset.colTip;
+      if (!tip) return;
+      colTooltip.textContent = tip;
+      colTooltip.style.display = "block";
+      const rect = (th as HTMLElement).getBoundingClientRect();
+      const pad = 4;
+      let x = rect.left;
+      const y = rect.bottom + pad;
+      const tw = colTooltip.offsetWidth;
+      if (x + tw > window.innerWidth - pad) x = window.innerWidth - tw - pad;
+      colTooltip.style.left = x + "px";
+      colTooltip.style.top = y + "px";
+    });
+    th.addEventListener("mouseleave", () => {
+      colTooltip.style.display = "none";
+    });
+  });
 
   // Nav link tooltips
   const navTooltip = document.createElement("div");
@@ -341,6 +511,56 @@ import Layout from "../layouts/Layout.astro";
     white-space: nowrap;
   }
 
+  /* ===== Confidence Legend ===== */
+  .conf-legend {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.78rem;
+    color: #555;
+    white-space: nowrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    padding: 0.15rem 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: #555;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.35;
+    transition: opacity 0.15s, border-color 0.15s;
+  }
+
+  .legend-item.active {
+    opacity: 1;
+    border-color: #bbb;
+  }
+
+  .legend-item:hover {
+    border-color: #888;
+    opacity: 1;
+  }
+
+  .legend-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .dot-high   { background: #c8e6c9; border: 1px solid #81c784; }
+  .dot-medium { background: #fff9c4; border: 1px solid #f9cf5e; }
+  .dot-low    { background: #ffcdd2; border: 1px solid #e57373; }
+  .dot-none   { background: #e8e8e8; border: 1px solid #bbb; }
+
   /* ===== Loading ===== */
   .loading {
     text-align: center;
@@ -374,7 +594,7 @@ import Layout from "../layouts/Layout.astro";
     font-family: var(--font-mono);
     font-size: 0.82rem;
     line-height: 1.4;
-    min-width: 1100px;
+    min-width: 1200px;
   }
 
   thead {
@@ -397,8 +617,17 @@ import Layout from "../layouts/Layout.astro";
     user-select: none;
   }
 
+  th.col-confidence {
+    cursor: default;
+    text-decoration: none;
+  }
+
   th:hover {
     background: #ddd;
+  }
+
+  th.col-confidence:hover {
+    background: var(--color-grey);
   }
 
   .sort-icon {
@@ -439,12 +668,9 @@ import Layout from "../layouts/Layout.astro";
     max-width: 160px;
   }
 
-  .col-route {
+  .col-confidence {
     min-width: 80px;
-  }
-
-  .col-score {
-    min-width: 110px;
+    max-width: 100px;
     white-space: nowrap;
   }
 
@@ -452,39 +678,74 @@ import Layout from "../layouts/Layout.astro";
     font-weight: 500;
   }
 
-  /* Score bar */
-  .score-cell {
+  .col-source-product .product-name,
+  .col-matched-product .product-name {
+    font-weight: 700;
+  }
+
+  .secondary-name {
+    color: #555;
+    font-weight: 700;
+    padding-left: 0.25rem;
+  }
+
+  /* Toggle button layout inside source cell */
+  .source-cell {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 0.2rem;
   }
 
-  .score-val {
-    font-size: 0.78rem;
+  .toggle-row {
+    display: flex;
+    justify-content: flex-end;
   }
 
-  .score-bar {
-    height: 3px;
+  /* ===== Confidence Row Colours ===== */
+  tr.conf-high td                    { background: #edf7ee; }
+  tr.conf-high .col-source-product   { background: #edf7ee; }
+  tr.conf-medium td                  { background: #fffbec; }
+  tr.conf-medium .col-source-product { background: #fffbec; }
+  tr.conf-low td                     { background: #fdf0f0; }
+  tr.conf-low .col-source-product    { background: #fdf0f0; }
+  tr.conf-none td                    { background: #f7f7f7; }
+  tr.conf-none .col-source-product   { background: #f7f7f7; }
+
+
+  /* ===== Confidence Badges ===== */
+  .conf-badge {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
     border-radius: 2px;
-    min-width: 2px;
-    max-width: 100%;
+    font-weight: 500;
+    letter-spacing: 0.02em;
   }
 
-  /* Alternating rows */
-  tbody tr:nth-child(even) td {
-    background: #fafafa;
+  .conf-badge-high   { background: #c8e6c9; color: #1b5e20; border: 1px solid #81c784; }
+  .conf-badge-medium { background: #fff9c4; color: #6d5900; border: 1px solid #f9cf5e; }
+  .conf-badge-low    { background: #ffcdd2; color: #7f0000; border: 1px solid #e57373; }
+  .conf-badge-none   { background: #e8e8e8; color: #555;    border: 1px solid #bbb; }
+
+  /* ===== Toggle Button ===== */
+  .toggle-btn {
+    display: inline-block;
+    padding: 0.1rem 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    background: none;
+    border: 1px solid #bbb;
+    cursor: pointer;
+    color: #555;
+    line-height: 1.4;
+    user-select: none;
   }
 
-  tbody tr:nth-child(even) .col-source-product {
-    background: #fafafa;
-  }
-
-  tbody tr:hover td {
-    background: #f0f0f0;
-  }
-
-  tbody tr:hover .col-source-product {
-    background: #f0f0f0;
+  .toggle-btn:hover {
+    background: #e8e8e8;
+    border-color: #888;
+    color: var(--color-black);
   }
 
   .empty-state {
@@ -513,6 +774,21 @@ import Layout from "../layouts/Layout.astro";
     border-top: 1px solid #ccc;
   }
 
+  /* ===== Column Header Tooltip ===== */
+  .col-tooltip {
+    position: fixed;
+    z-index: 200;
+    max-width: 320px;
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    pointer-events: none;
+    border: 1px solid #ccc;
+    background: var(--color-grey);
+    color: var(--color-black);
+  }
+
   /* ===== Nav Tooltip ===== */
   .nav-tooltip {
     position: fixed;
@@ -538,6 +814,10 @@ import Layout from "../layouts/Layout.astro";
 
     .toolbar-right {
       justify-content: flex-end;
+    }
+
+    .conf-legend {
+      display: none;
     }
   }
 </style>

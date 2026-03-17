@@ -1,75 +1,25 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import DatasetMeta from "../content/dataset-metadata.md";
-import FdaToMhraMeta from "../content/fda-to-mhra-metadata.md";
-import MhraToFdaMeta from "../content/mhra-to-fda-metadata.md";
-import DatasetMethodology from "../content/dataset-methodology.md";
+import PipelineContent from "../content/full_pipeline_archaeology.md";
 ---
 
-<Layout title="Results">
+<Layout title="Methods">
   <nav class="top-nav">
     <div class="nav-left">
       <a href="/drugs" class="site-name">JURISCRIPTION</a>
-      <a href="/results" class="nav-link active">RESULTS</a>
-      <a href="/methods" class="nav-link">METHODS</a>
+      <a href="/results" class="nav-link">RESULTS</a>
+      <a href="/methods" class="nav-link active">METHODS</a>
       <a href="/fda-to-mhra" class="nav-link" data-nav-tip="This sheet matches each drug in the FDA dataset to the closest drug (based on ingredients and dosage) in the MHRA dataset.">FDA → MHRA</a>
       <a href="/mhra-to-fda" class="nav-link" data-nav-tip="This sheet matches each drug in the MHRA dataset to the closest drug (based on ingredients and dosage) in the FDA dataset.">MHRA → FDA</a>
     </div>
   </nav>
 
-  <div class="results-layout">
-    <nav class="section-tabs" id="section-tabs">
-      <button class="tab-btn active" data-target="dataset-meta">Drug Database</button>
-      <button class="tab-btn" data-target="fda-mhra-meta">FDA → MHRA</button>
-      <button class="tab-btn" data-target="mhra-fda-meta">MHRA → FDA</button>
-      <button class="tab-btn" data-target="dataset-method">Dataset Methodology</button>
-    </nav>
-
-    <div class="results-body">
-      <section id="dataset-meta" class="prose-section active">
-        <DatasetMeta />
-      </section>
-      <section id="fda-mhra-meta" class="prose-section">
-        <FdaToMhraMeta />
-      </section>
-      <section id="mhra-fda-meta" class="prose-section">
-        <MhraToFdaMeta />
-      </section>
-      <section id="dataset-method" class="prose-section">
-        <DatasetMethodology />
-      </section>
-    </div>
+  <div class="methods-body">
+    <PipelineContent />
   </div>
 </Layout>
 
 <script>
-  // Position sticky tab bar below the fixed nav
-  const navEl = document.querySelector(".top-nav") as HTMLElement;
-  const tabsEl = document.querySelector(".section-tabs") as HTMLElement;
-
-  function updateLayout() {
-    const navH = navEl.offsetHeight;
-    tabsEl.style.top = navH + "px";
-    (document.querySelector(".results-layout") as HTMLElement).style.paddingTop = (navH + tabsEl.offsetHeight) + "px";
-  }
-  updateLayout();
-  window.addEventListener("resize", updateLayout);
-
-  // Tab switching
-  const tabBtns = document.querySelectorAll<HTMLElement>(".tab-btn");
-  const sections = document.querySelectorAll<HTMLElement>(".prose-section");
-
-  tabBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = btn.dataset.target!;
-      tabBtns.forEach((b) => b.classList.remove("active"));
-      sections.forEach((s) => s.classList.remove("active"));
-      btn.classList.add("active");
-      document.getElementById(target)?.classList.add("active");
-    });
-  });
-
-  // Nav tooltips
   const navTooltip = document.createElement("div");
   navTooltip.className = "nav-tooltip";
   navTooltip.style.display = "none";
@@ -153,64 +103,18 @@ import DatasetMethodology from "../content/dataset-methodology.md";
     color: var(--color-black);
   }
 
-  .results-layout {
+  .methods-body {
     max-width: 780px;
     margin: 0 auto;
-    padding: 0 2rem 6rem;
-  }
-
-  /* ===== Section Tabs ===== */
-  .section-tabs {
-    display: flex;
-    gap: 0;
-    border-bottom: 1px solid #ccc;
-    position: sticky;
-    z-index: 90;
-    background: white;
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-  }
-
-  .tab-btn {
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    padding: 0.5rem 1rem;
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    color: #888;
-    cursor: pointer;
-    user-select: none;
-    white-space: nowrap;
-    margin-bottom: -1px;
-    transition: color 0.1s, border-color 0.1s;
-  }
-
-  .tab-btn:hover {
-    color: var(--color-black);
-  }
-
-  .tab-btn.active {
-    color: var(--color-black);
-    border-bottom-color: var(--color-black);
-  }
-
-  /* ===== Prose Sections ===== */
-  .prose-section {
-    display: none;
-    padding-top: 2.5rem;
+    padding: 6rem 2rem 6rem;
     font-family: var(--font-mono);
     font-size: 0.88rem;
     line-height: 1.8;
     color: var(--color-black);
   }
 
-  .prose-section.active {
-    display: block;
-  }
-
-  /* ===== Prose Headings ===== */
-  .prose-section h1 {
+  /* ===== Prose styles for markdown content ===== */
+  .methods-body h1 {
     font-family: var(--font-mono);
     font-size: 1.0rem;
     font-weight: 700;
@@ -218,105 +122,89 @@ import DatasetMethodology from "../content/dataset-methodology.md";
     line-height: 1.3;
   }
 
-  .prose-section h1 + p,
-  .prose-section h1 + blockquote {
-    margin-top: 0;
-  }
-
-  .prose-section h2 {
+  .methods-body h2 {
     font-family: var(--font-mono);
-    font-size: 1.0rem;
+    font-size: 1.05rem;
     font-weight: 700;
     margin: 2.5rem 0 0.75rem;
     padding-top: 2rem;
     border-top: 1px solid #ddd;
   }
 
-  .prose-section h2:first-of-type {
+  .methods-body h2:first-of-type {
     border-top: none;
     padding-top: 0;
   }
 
-  .prose-section h3 {
+  .methods-body h3 {
     font-family: var(--font-mono);
     font-size: 0.92rem;
     font-weight: 700;
     margin: 1.75rem 0 0.5rem;
   }
 
-  .prose-section h4 {
+  .methods-body h4 {
     font-family: var(--font-mono);
     font-size: 0.88rem;
     font-weight: 700;
     margin: 1.25rem 0 0.4rem;
   }
 
-  .prose-section p {
+  .methods-body p {
     margin-bottom: 1rem;
   }
 
-  .prose-section blockquote {
-    font-family: var(--font-mono);
-    font-style: normal;
-    border-left: 3px solid #ccc;
-    background: none;
-    border-radius: 0;
-    margin: 0 0 1rem;
-    padding: 0.25rem 0 0.25rem 1rem;
-    color: #666;
-  }
-
-  .prose-section hr {
+  .methods-body hr {
     border: none;
     border-top: 1px solid #ddd;
     margin: 2rem 0;
   }
 
-  .prose-section strong {
+  .methods-body strong {
     font-weight: 700;
   }
 
-  .prose-section em {
+  .methods-body em {
     font-style: italic;
   }
 
-  .prose-section ul,
-  .prose-section ol {
+  .methods-body ul,
+  .methods-body ol {
     margin: 0.75rem 0 1rem 1.5rem;
     padding: 0;
   }
 
-  .prose-section li {
+  .methods-body li {
     margin-bottom: 0.3rem;
   }
 
   /* ===== Tables ===== */
-  .prose-section table {
+  .methods-body table {
     border-collapse: collapse;
     width: 100%;
     margin: 1rem 0 1.5rem;
     font-size: 0.82rem;
   }
 
-  .prose-section th {
+  .methods-body th {
     text-align: left;
     border-bottom: 2px solid #333;
     padding: 0.3rem 0.75rem 0.3rem 0;
     font-weight: 700;
   }
 
-  .prose-section td {
+  .methods-body td {
     border-bottom: 1px solid #e0e0e0;
     padding: 0.3rem 0.75rem 0.3rem 0;
     vertical-align: top;
   }
 
-  .prose-section tr:last-child td {
+  .methods-body tr:last-child td {
     border-bottom: none;
   }
 
   /* ===== Code blocks ===== */
-  .prose-section pre {
+  .methods-body pre {
     background: #f6f6f6;
     border: 1px solid #ddd;
     padding: 1rem;
@@ -326,7 +214,7 @@ import DatasetMethodology from "../content/dataset-methodology.md";
     line-height: 1.6;
   }
 
-  .prose-section code {
+  .methods-body code {
     font-family: var(--font-mono);
     font-size: 0.82rem;
     background: #f2f2f2;
@@ -334,7 +222,7 @@ import DatasetMethodology from "../content/dataset-methodology.md";
     border-radius: 2px;
   }
 
-  .prose-section pre code {
+  .methods-body pre code {
     background: none;
     padding: 0;
     font-size: inherit;

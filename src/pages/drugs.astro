@@ -7,6 +7,7 @@ import Layout from "../layouts/Layout.astro";
     <div class="nav-left">
       <a href="/drugs" class="site-name">JURISCRIPTION</a>
       <a href="/results" class="nav-link">RESULTS</a>
+      <a href="/methods" class="nav-link">METHODS</a>
       <a href="/fda-to-mhra" class="nav-link" data-nav-tip="This sheet matches each drug in the FDA dataset to the closest drug (based on ingredients and dosage) in the MHRA dataset.">FDA → MHRA</a>
       <a href="/mhra-to-fda" class="nav-link" data-nav-tip="This sheet matches each drug in the MHRA dataset to the closest drug (based on ingredients and dosage) in the FDA dataset.">MHRA → FDA</a>
     </div>
@@ -56,13 +57,13 @@ import Layout from "../layouts/Layout.astro";
     <table>
       <thead>
         <tr>
-          <th class="col-product" data-sort="n">Product<span class="sort-icon"> ↕</span></th>
-          <th data-sort="s">Ingredients<span class="sort-icon"> ↕</span></th>
-          <th class="col-strength" data-sort="d">Strength<span class="sort-icon"> ↕</span></th>
-          <th class="col-route">Route</th>
-          <th class="col-status">Status</th>
-          <th>Company</th>
-          <th class="col-region">Region / Countries</th>
+          <th class="col-product" data-sort="n" data-col-tip="The brand or trade name of the drug as registered with its regulatory authority.">Product<span class="sort-icon"> ↕</span></th>
+          <th data-sort="s" data-col-tip="The active pharmaceutical ingredient(s) (INN / generic name) contained in the product.">Ingredients<span class="sort-icon"> ↕</span></th>
+          <th class="col-strength" data-sort="d" data-col-tip="The dose or concentration of the active ingredient(s), e.g. 10 mg or 5 mg/mL.">Strength<span class="sort-icon"> ↕</span></th>
+          <th class="col-route" data-col-tip="The route of administration — how the drug is taken or applied, e.g. oral, topical, intravenous.">Route</th>
+          <th class="col-status" data-col-tip="The regulatory access category. Hover individual cells for a full definition of each status code.">Status</th>
+          <th data-col-tip="The marketing authorisation holder or applicant company responsible for this product.">Company</th>
+          <th class="col-region" data-col-tip="The regulatory region (FDA = US, MHRA = UK, EMA = EU). EU products also show the specific authorised countries.">Region / Countries</th>
         </tr>
       </thead>
       <tbody id="table-body"></tbody>
@@ -184,6 +185,32 @@ import Layout from "../layouts/Layout.astro";
     });
     link.addEventListener("mouseleave", () => {
       navTooltip.style.display = "none";
+    });
+  });
+
+  // Column header tooltips
+  const colTooltip = document.createElement("div");
+  colTooltip.className = "col-tooltip";
+  colTooltip.style.display = "none";
+  document.body.appendChild(colTooltip);
+
+  document.querySelectorAll("th[data-col-tip]").forEach((th) => {
+    th.addEventListener("mouseenter", () => {
+      const tip = (th as HTMLElement).dataset.colTip;
+      if (!tip) return;
+      colTooltip.textContent = tip;
+      colTooltip.style.display = "block";
+      const rect = (th as HTMLElement).getBoundingClientRect();
+      const pad = 4;
+      let x = rect.left;
+      const y = rect.bottom + pad;
+      const tw = colTooltip.offsetWidth;
+      if (x + tw > window.innerWidth - pad) x = window.innerWidth - tw - pad;
+      colTooltip.style.left = x + "px";
+      colTooltip.style.top = y + "px";
+    });
+    th.addEventListener("mouseleave", () => {
+      colTooltip.style.display = "none";
     });
   });
 
@@ -997,6 +1024,21 @@ import Layout from "../layouts/Layout.astro";
 
   td.col-status {
     cursor: default;
+  }
+
+  /* ===== Column Header Tooltip ===== */
+  .col-tooltip {
+    position: fixed;
+    z-index: 200;
+    max-width: 320px;
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    pointer-events: none;
+    border: 1px solid #ccc;
+    background: var(--color-grey);
+    color: var(--color-black);
   }
 
   /* ===== Responsive ===== */
