@@ -14,6 +14,26 @@ import Layout from "../layouts/Layout.astro";
     </div>
   </nav>
 
+  <!-- Confidence guide modal -->
+  <div class="conf-modal-overlay" id="conf-modal">
+    <div class="conf-modal">
+      <h2>Understanding Confidence Levels</h2>
+      <p class="conf-modal-note">In this dataset each FDA product is matched with the most similar MHRA product.</p>
+      <ul class="conf-modal-list">
+        <li><span class="legend-dot dot-high"></span><strong>High</strong> — The ingredients and dosage strength are perfectly matched. We are confident this drug is available in both jurisdictions.</li>
+        <li><span class="legend-dot dot-medium"></span><strong>Medium</strong> — The ingredients match but the dosage is not a perfect match.</li>
+        <li><span class="legend-dot dot-low"></span><strong>Low</strong> — Partial or approximate match. We have low confidence that this drug is approved in both jurisdictions.</li>
+        <li><span class="legend-dot dot-none"></span><strong>No Match</strong> — No sufficiently similar drug could be found in the target dataset.</li>
+      </ul>
+      <p class="conf-modal-note">For cases where one input drug had multiple matches, the best match is presented whilst the others can be viewed by selecting the dropdown arrow ▾.</p>
+      <p class="conf-modal-note">For more details, please see the <a href="/methods">methodology section</a>.</p>
+      <div class="conf-modal-actions">
+        <button class="conf-modal-btn" id="conf-modal-close">I understand</button>
+        <button class="conf-modal-btn-secondary" id="conf-modal-dismiss">Don't show again</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toolbar">
     <input
       type="text"
@@ -87,6 +107,19 @@ import Layout from "../layouts/Layout.astro";
   const scrollSentinel = document.getElementById("scroll-sentinel")!;
   const loadMoreIndicator = document.getElementById("load-more-indicator")!;
   const endOfResults = document.getElementById("end-of-results")!;
+
+  // Confidence modal
+  const confModal = document.getElementById("conf-modal") as HTMLElement;
+  if (localStorage.getItem("conf-modal-dismissed") === "true") {
+    confModal.style.display = "none";
+  }
+  document.getElementById("conf-modal-close")!.addEventListener("click", () => {
+    confModal.style.display = "none";
+  });
+  document.getElementById("conf-modal-dismiss")!.addEventListener("click", () => {
+    localStorage.setItem("conf-modal-dismissed", "true");
+    confModal.style.display = "none";
+  });
 
   const navEl = document.querySelector(".top-nav") as HTMLElement;
   const toolbarEl = document.querySelector(".toolbar") as HTMLElement;
@@ -609,8 +642,9 @@ import Layout from "../layouts/Layout.astro";
     padding: 0.4rem 0.75rem;
     border: 1px solid #ccc;
     border-top: none;
-    background: var(--color-grey);
-    font-weight: normal;
+    background: white;
+    color: var(--color-accent);
+    font-weight: 700;
     white-space: nowrap;
     text-decoration: underline dotted;
     text-underline-offset: 2px;
@@ -624,15 +658,15 @@ import Layout from "../layouts/Layout.astro";
   }
 
   th:hover {
-    background: #ddd;
+    background: #f0f8f5;
   }
 
   th.col-confidence:hover {
-    background: var(--color-grey);
+    background: white;
   }
 
   .sort-icon {
-    color: #999;
+    color: #aaa;
     font-size: 0.75rem;
   }
 
@@ -656,7 +690,7 @@ import Layout from "../layouts/Layout.astro";
 
   thead .col-source-product {
     z-index: 111;
-    background: var(--color-grey);
+    background: white;
   }
 
   .col-matched-product {
@@ -709,8 +743,8 @@ import Layout from "../layouts/Layout.astro";
   tr.conf-medium .col-source-product { background: #fffbec; }
   tr.conf-low td                     { background: #fdf0f0; }
   tr.conf-low .col-source-product    { background: #fdf0f0; }
-  tr.conf-none td                    { background: #f7f7f7; }
-  tr.conf-none .col-source-product   { background: #f7f7f7; }
+  tr.conf-none td                    { background: white; }
+  tr.conf-none .col-source-product   { background: white; }
 
 
   /* ===== Confidence Badges ===== */
@@ -786,7 +820,7 @@ import Layout from "../layouts/Layout.astro";
     line-height: 1.5;
     pointer-events: none;
     border: 1px solid #ccc;
-    background: var(--color-grey);
+    background: white;
     color: var(--color-black);
   }
 
@@ -801,7 +835,111 @@ import Layout from "../layouts/Layout.astro";
     line-height: 1.5;
     pointer-events: none;
     border: 1px solid #ccc;
-    background: var(--color-grey);
+    background: white;
+    color: var(--color-black);
+  }
+
+  /* ===== Confidence Modal ===== */
+  .conf-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .conf-modal {
+    background: white;
+    border: 1px solid #ccc;
+    max-width: 520px;
+    width: 90%;
+    padding: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--color-black);
+  }
+
+  .conf-modal h2 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 1.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .conf-modal-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.25rem;
+  }
+
+  .conf-modal-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .conf-modal-list .legend-dot {
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+  }
+
+  .conf-modal-note {
+    margin: 0 0 0.75rem;
+    color: #555;
+  }
+
+  .conf-modal-note a {
+    color: var(--color-accent);
+  }
+
+  .conf-modal-btn {
+    display: block;
+    margin: 1.5rem auto 0;
+    padding: 0.5rem 1.5rem;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+  }
+
+  .conf-modal-btn:hover {
+    background: #2f6357;
+  }
+
+  .conf-modal-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+  }
+
+  .conf-modal-actions .conf-modal-btn {
+    margin: 0;
+  }
+
+  .conf-modal-btn-secondary {
+    background: none;
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: #888;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    padding: 0;
+  }
+
+  .conf-modal-btn-secondary:hover {
     color: var(--color-black);
   }
 
