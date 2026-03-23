@@ -6,6 +6,7 @@ import Layout from "../layouts/Layout.astro";
   <nav class="top-nav">
     <div class="nav-left">
       <a href="/drugs" class="site-name">JURISCRIPTION</a>
+      <a href="/drugs" class="nav-link active">MAIN DATASET</a>
       <a href="/results" class="nav-link">RESULTS</a>
       <a href="/methods" class="nav-link">METHODS</a>
       <a href="/fda-to-mhra" class="nav-link" data-nav-tip="This sheet matches each drug in the FDA dataset to the closest drug (based on ingredients and dosage) in the MHRA dataset.">FDA → MHRA</a>
@@ -656,7 +657,8 @@ import Layout from "../layouts/Layout.astro";
   }
 
   .toolbar input:focus {
-    border-color: #333;
+    border-color: var(--color-accent);
+    outline: 2px solid var(--color-accent-light);
   }
 
   .toolbar-left {
@@ -690,9 +692,9 @@ import Layout from "../layouts/Layout.astro";
   }
 
   .region-btn.active {
-    background: var(--color-black);
+    background: var(--color-accent);
     color: white;
-    border-color: var(--color-black);
+    border-color: var(--color-accent);
   }
 
   .result-count {
