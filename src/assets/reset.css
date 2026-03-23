@@ -57,6 +57,11 @@ body {
   color: var(--color-accent) !important;
 }
 
+.nav-sep {
+  color: #ccc;
+  user-select: none;
+}
+
 input,
 button,
 textarea,

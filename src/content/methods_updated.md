@@ -1,10 +1,10 @@
-# From Pillgram.xlsx to the Website: The Full Data Pipeline
+# The Full Data Pipeline
 
 This is a trace of every transformation the data goes through, from the original source spreadsheet to the files that power the website. It covers source acquisition, PDF extraction, normalisation, two distinct matching systems, and the discrepancy analysis. This is presented in the order that makes it easiest to follow, rather than strict chronological order. All relevant files and scripts for replicating our work — including files detailing the reasoning of any LLMs used, which by the end was quite common — can be found in the git repository.
 
 ---
 
-## Overview: The Full Pipeline at a Glance
+## The Full Pipeline at a Glance
 
 ```
 FDA Orange Book MHRA FOI Request  EMA Article 57
@@ -54,7 +54,7 @@ FDA Orange Book MHRA FOI Request  EMA Article 57
 
 ## Stage 1: Source Data Acquisition
 
-### What Pillgram.xlsx Is
+### Pillgram.xlsx
 
 The project began in 2024, and the data we had became somewhat dated. We therefore went about downloading the latest available versions of the relevant regulatory datasets. `Pillgram.xlsx` is the master source workbook — it bundles three regulatory datasets along with a `META` sheet recording provenance for each.
 
