@@ -1,6 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import PipelineContent from "../content/full_pipeline_archaeology.md";
+import PipelineContent from "../content/methods_updated.md";
 ---
 
 <Layout title="Methods">
@@ -24,6 +24,13 @@ import PipelineContent from "../content/full_pipeline_archaeology.md";
   navTooltip.className = "nav-tooltip";
   navTooltip.style.display = "none";
   document.body.appendChild(navTooltip);
+
+  document.querySelectorAll(".methods-body table").forEach((table) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "table-scroll";
+    table.parentNode!.insertBefore(wrapper, table);
+    wrapper.appendChild(table);
+  });
 
   document.querySelectorAll(".nav-link[data-nav-tip]").forEach((link) => {
     link.addEventListener("mouseenter", () => {
@@ -179,10 +186,17 @@ import PipelineContent from "../content/full_pipeline_archaeology.md";
   }
 
   /* ===== Tables ===== */
-  .methods-body table {
-    border-collapse: collapse;
+  .table-scroll {
+    overflow-x: auto;
     width: 100%;
     margin: 1rem 0 1.5rem;
+  }
+
+  .methods-body table {
+    border-collapse: collapse;
+    width: max-content;
+    min-width: 100%;
+    margin: 0;
     font-size: 0.82rem;
   }
 
@@ -212,6 +226,8 @@ import PipelineContent from "../content/full_pipeline_archaeology.md";
     margin: 1rem 0 1.5rem;
     font-size: 0.78rem;
     line-height: 1.6;
+    display: flex;
+    justify-content: center;
   }
 
   .methods-body code {
