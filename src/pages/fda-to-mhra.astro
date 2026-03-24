@@ -466,6 +466,67 @@ import Layout from "../layouts/Layout.astro";
       navTooltip.style.display = "none";
     });
   });
+
+  // Legal status cell tooltips
+  const STATUS_TIPS: Record<string, { title: string; desc: string }> = {
+    "POM":           { title: "Prescription Only Medicine", desc: "Requires a valid prescription from an authorised prescriber. Can only be dispensed by a licensed pharmacist." },
+    "GSL":           { title: "General Sales List",         desc: "Available without a pharmacist. Can be purchased outside a pharmacy (such as in a supermarket)." },
+    "P":             { title: "Pharmacy Medicine",          desc: "Only sold in a registered pharmacy under a pharmacist's supervision. Does not require a prescription." },
+    "RX":            { title: "Prescription Only",          desc: "Requires a valid prescription from a licensed prescriber." },
+    "OTC":           { title: "Over the Counter",           desc: "Can be purchased without a prescription in pharmacies or supermarkets." },
+    "DISCN":         { title: "Discontinued",               desc: "This product is no longer available on the market." },
+    "NOT CONTROLLED":{ title: "Not Controlled",             desc: "Not subject to controlled substance scheduling or restrictions." },
+    "GSL/P":         { title: "GSL / Pharmacy Medicine",    desc: "Authorised under both General Sale List and Pharmacy-only conditions depending on the product presentation." },
+    "P/POM":         { title: "Pharmacy / Prescription",    desc: "Authorised under both Pharmacy and Prescription-Only conditions depending on the product presentation." },
+    "GSL/POM":       { title: "GSL / Prescription",         desc: "Authorised under both General Sale List and Prescription-Only conditions depending on the product presentation." },
+    "GSL/P/POM":     { title: "GSL / Pharmacy / Prescription", desc: "Authorised across all three access categories depending on the product presentation." },
+  };
+
+  const statusTooltip = document.createElement("div");
+  statusTooltip.className = "status-tooltip tooltip-dark";
+  statusTooltip.style.display = "none";
+  document.body.appendChild(statusTooltip);
+
+  let statusTooltipTimeout: any = null;
+
+  function showStatusTooltip(e: MouseEvent, code: string) {
+    const tip = STATUS_TIPS[code.trim().toUpperCase()];
+    if (!tip) return;
+    clearTimeout(statusTooltipTimeout);
+    statusTooltip.innerHTML = `<strong>${tip.title}</strong><br>${tip.desc}`;
+    statusTooltip.style.display = "block";
+    const cell = (e.target as HTMLElement).closest("td.col-legal") as HTMLElement;
+    if (cell) positionStatusTooltip(cell);
+  }
+
+  function positionStatusTooltip(cell: HTMLElement) {
+    const rect = cell.getBoundingClientRect();
+    const pad = 4;
+    let x = rect.right + pad;
+    let y = rect.bottom + pad;
+    const tw = statusTooltip.offsetWidth;
+    const th = statusTooltip.offsetHeight;
+    if (x + tw > window.innerWidth - pad) x = rect.left - tw - pad;
+    if (y + th > window.innerHeight - pad) y = rect.top - th - pad;
+    statusTooltip.style.left = x + "px";
+    statusTooltip.style.top = y + "px";
+  }
+
+  function hideStatusTooltip() {
+    clearTimeout(statusTooltipTimeout);
+    statusTooltipTimeout = setTimeout(() => { statusTooltip.style.display = "none"; }, 100);
+  }
+
+  document.addEventListener("mouseover", (e) => {
+    const target = (e.target as HTMLElement).closest("td.col-legal");
+    if (!target) return;
+    const code = (target as HTMLElement).textContent?.trim() || "";
+    if (code && STATUS_TIPS[code.toUpperCase()]) showStatusTooltip(e as MouseEvent, code);
+  });
+
+  document.addEventListener("mouseout", (e) => {
+    if ((e.target as HTMLElement).closest("td.col-legal")) hideStatusTooltip();
+  });
 </script>
 
 <style is:global>
@@ -808,6 +869,31 @@ import Layout from "../layouts/Layout.astro";
   .legal-badge-p-pom     { background: #fce4ec; color: #880e4f; border: 1px solid #f48fb1; }
   .legal-badge-gsl-pom   { background: #fce4ec; color: #880e4f; border: 1px solid #f48fb1; }
   .legal-badge-gsl-p-pom { background: #fce4ec; color: #880e4f; border: 1px solid #f48fb1; }
+
+  /* ===== Legal Status Cell Tooltip ===== */
+  .status-tooltip {
+    position: fixed;
+    z-index: 200;
+    max-width: 300px;
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    pointer-events: none;
+    border: 1px solid #ccc;
+    background: white;
+    color: var(--color-black);
+  }
+
+  .status-tooltip strong {
+    font-size: 0.85rem;
+    display: block;
+    margin-bottom: 0.15rem;
+  }
+
+  td.col-legal {
+    cursor: default;
+  }
 
   /* ===== Toggle Button ===== */
   .toggle-btn {
