@@ -65,9 +65,11 @@ import Layout from "../layouts/Layout.astro";
           <th class="col-source-product" data-sort="a" data-col-tip="The brand or trade name of the drug as listed in the FDA Orange Book.">FDA Product<span class="sort-icon"> ↕</span></th>
           <th data-sort="b" data-col-tip="The International Nonproprietary Name(s) — the generic active ingredient(s) of the FDA source product.">INN Ingredient(s)<span class="sort-icon"> ↕</span></th>
           <th class="col-strength" data-sort="c" data-col-tip="The dose or concentration of the active ingredient(s) in the FDA product.">FDA Strength<span class="sort-icon"> ↕</span></th>
+          <th class="col-legal" data-sort="s" data-col-tip="The legal/prescribing status of the FDA product. RX = Prescription Only; OTC = Over the Counter; DISCN = Discontinued.">FDA Legal Status<span class="sort-icon"> ↕</span></th>
           <th class="col-matched-product" data-sort="d" data-col-tip="The MHRA-authorised product judged most similar to the FDA source, scored on ingredient and strength similarity.">Closest Matched MHRA Product<span class="sort-icon"> ↕</span></th>
           <th data-sort="e" data-col-tip="The active ingredient(s) of the matched MHRA product.">Matched INN Ingredient(s)<span class="sort-icon"> ↕</span></th>
           <th class="col-strength" data-sort="f" data-col-tip="The dose or concentration of the matched MHRA product.">Matched Strength<span class="sort-icon"> ↕</span></th>
+          <th class="col-legal" data-sort="m" data-col-tip="The legal/prescribing status of the matched MHRA product. POM = Prescription Only Medicine; P = Pharmacy Medicine; GSL = General Sale List.">MHRA Legal Status<span class="sort-icon"> ↕</span></th>
           <th class="col-confidence" data-col-tip="Match quality: HIGH = exact ingredient and close strength; MEDIUM = same ingredient, weaker strength match; LOW = partial or approximate match.">Confidence</th>
         </tr>
       </thead>
@@ -306,7 +308,7 @@ import Layout from "../layouts/Layout.astro";
     const totalMatches = renderedGroups.reduce((acc, g) => acc + 1 + g.secondaries.length, 0);
     resultCount.textContent = totalMatches.toLocaleString() + " matches";
     if (renderedGroups.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No matches found.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="9" class="empty-state">No matches found.</td></tr>`;
       return;
     }
     loadMore();
@@ -353,6 +355,12 @@ import Layout from "../layouts/Layout.astro";
     return `<span class="conf-badge conf-badge-${k.toLowerCase()}">${k}</span>`;
   }
 
+  function legalBadge(code: string): string {
+    if (!code) return "&mdash;";
+    const cls = code.replace(/\//g, "-").toLowerCase();
+    return `<span class="legal-badge legal-badge-${cls}">${esc(code)}</span>`;
+  }
+
   function appendGroupRows(fragment: DocumentFragment, g: Group, groupId: string) {
     // Primary row
     const primaryTr = document.createElement("tr");
@@ -370,9 +378,11 @@ import Layout from "../layouts/Layout.astro";
       <td class="col-source-product"><div class="source-cell"><div class="product-name">${esc(g.primary.a || "")}</div>${toggleBtn ? `<div class="toggle-row">${toggleBtn}</div>` : ""}</div></td>
       <td>${esc(g.primary.b || "") || "&mdash;"}</td>
       <td class="col-strength">${esc(g.primary.c || "") || "&mdash;"}</td>
+      <td class="col-legal">${legalBadge(g.primary.s || "")}</td>
       <td class="col-matched-product"><div class="product-name">${esc(g.primary.d || "") || "&mdash;"}</div></td>
       <td>${esc(g.primary.e || "") || "&mdash;"}</td>
       <td class="col-strength">${esc(g.primary.f || "") || "&mdash;"}</td>
+      <td class="col-legal">${legalBadge(g.primary.m || "")}</td>
       <td class="col-confidence">${confBadge(g.primary)}</td>`;
     fragment.appendChild(primaryTr);
 
@@ -389,9 +399,11 @@ import Layout from "../layouts/Layout.astro";
         <td class="col-source-product"><div class="product-name secondary-name">↳ ${esc(sec.a || "")}</div></td>
         <td>${esc(sec.b || "") || "&mdash;"}</td>
         <td class="col-strength">${esc(sec.c || "") || "&mdash;"}</td>
+        <td class="col-legal">${legalBadge(sec.s || "")}</td>
         <td class="col-matched-product"><div class="product-name">${esc(sec.d || "") || "&mdash;"}</div></td>
         <td>${esc(sec.e || "") || "&mdash;"}</td>
         <td class="col-strength">${esc(sec.f || "") || "&mdash;"}</td>
+        <td class="col-legal">${legalBadge(sec.m || "")}</td>
         <td class="col-confidence">${confBadge(sec)}</td>`;
       fragment.appendChild(secTr);
     }
@@ -704,6 +716,12 @@ import Layout from "../layouts/Layout.astro";
     max-width: 160px;
   }
 
+  .col-legal {
+    min-width: 90px;
+    max-width: 130px;
+    white-space: nowrap;
+  }
+
   .col-confidence {
     min-width: 80px;
     max-width: 100px;
@@ -763,6 +781,33 @@ import Layout from "../layouts/Layout.astro";
   .conf-badge-medium { background: #fff9c4; color: #6d5900; border: 1px solid #f9cf5e; }
   .conf-badge-low    { background: #ffcdd2; color: #7f0000; border: 1px solid #e57373; }
   .conf-badge-none   { background: #e8e8e8; color: #555;    border: 1px solid #bbb; }
+
+  /* ===== Legal Status Badges ===== */
+  .legal-badge {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+    border-radius: 2px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  /* FDA */
+  .legal-badge-rx    { background: #fce4ec; color: #880e4f; border: 1px solid #f48fb1; }
+  .legal-badge-otc   { background: #e8f5e9; color: #1b5e20; border: 1px solid #81c784; }
+  .legal-badge-discn { background: #e8e8e8; color: #555;    border: 1px solid #bbb; }
+
+  /* MHRA */
+  .legal-badge-pom   { background: #fce4ec; color: #880e4f; border: 1px solid #f48fb1; }
+  .legal-badge-p     { background: #fff9c4; color: #6d5900; border: 1px solid #f9cf5e; }
+  .legal-badge-gsl   { background: #e8f5e9; color: #1b5e20; border: 1px solid #81c784; }
+
+  /* Mixed/other (e.g. GSL/P, P/POM) */
+  .legal-badge-gsl-p     { background: #fff9c4; color: #6d5900; border: 1px solid #f9cf5e; }
+  .legal-badge-p-pom     { background: #fce4ec; color: #880e4f; border: 1px solid #f48fb1; }
+  .legal-badge-gsl-pom   { background: #fce4ec; color: #880e4f; border: 1px solid #f48fb1; }
+  .legal-badge-gsl-p-pom { background: #fce4ec; color: #880e4f; border: 1px solid #f48fb1; }
 
   /* ===== Toggle Button ===== */
   .toggle-btn {
