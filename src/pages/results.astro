@@ -1,9 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import DatasetMeta from "../content/dataset-metadata.md";
-import FdaToMhraMeta from "../content/fda-to-mhra-metadata.md";
-import MhraToFdaMeta from "../content/mhra-to-fda-metadata.md";
-import DatasetMethodology from "../content/dataset-methodology.md";
+import ResultsAll from "../content/results-all.md";
 ---
 
 <Layout title="Results">
@@ -19,59 +16,25 @@ import DatasetMethodology from "../content/dataset-methodology.md";
     </div>
   </nav>
 
-  <div class="wip-banner">WORK IN PROGRESS - CURRENTLY ALL LOREM IPSUM SLOP</div>
-
   <div class="results-layout">
-    <nav class="section-tabs" id="section-tabs">
-      <button class="tab-btn active" data-target="dataset-meta">Drug Database</button>
-      <button class="tab-btn" data-target="fda-mhra-meta">FDA → MHRA</button>
-      <button class="tab-btn" data-target="mhra-fda-meta">MHRA → FDA</button>
-      <button class="tab-btn" data-target="dataset-method">Dataset Methodology</button>
-    </nav>
-
     <div class="results-body">
-      <section id="dataset-meta" class="prose-section active">
-        <DatasetMeta />
-      </section>
-      <section id="fda-mhra-meta" class="prose-section">
-        <FdaToMhraMeta />
-      </section>
-      <section id="mhra-fda-meta" class="prose-section">
-        <MhraToFdaMeta />
-      </section>
-      <section id="dataset-method" class="prose-section">
-        <DatasetMethodology />
+      <section class="prose-section active">
+        <ResultsAll />
       </section>
     </div>
   </div>
 </Layout>
 
 <script>
-  // Position sticky tab bar below the fixed nav
+  // Position page below the fixed nav
   const navEl = document.querySelector(".top-nav") as HTMLElement;
-  const tabsEl = document.querySelector(".section-tabs") as HTMLElement;
 
   function updateLayout() {
     const navH = navEl.offsetHeight;
-    tabsEl.style.top = navH + "px";
-    (document.querySelector(".results-layout") as HTMLElement).style.paddingTop = (navH + tabsEl.offsetHeight) + "px";
+    (document.querySelector(".results-layout") as HTMLElement).style.paddingTop = navH + "px";
   }
   updateLayout();
   window.addEventListener("resize", updateLayout);
-
-  // Tab switching
-  const tabBtns = document.querySelectorAll<HTMLElement>(".tab-btn");
-  const sections = document.querySelectorAll<HTMLElement>(".prose-section");
-
-  tabBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = btn.dataset.target!;
-      tabBtns.forEach((b) => b.classList.remove("active"));
-      sections.forEach((s) => s.classList.remove("active"));
-      btn.classList.add("active");
-      document.getElementById(target)?.classList.add("active");
-    });
-  });
 
   // Nav tooltips
   const navTooltip = document.createElement("div");
@@ -157,18 +120,6 @@ import DatasetMethodology from "../content/dataset-methodology.md";
     color: var(--color-black);
   }
 
-  .wip-banner {
-    text-align: center;
-    font-family: var(--font-mono);
-    font-size: 2rem;
-    font-weight: 700;
-    padding: 5rem 1rem 1.5rem;
-    letter-spacing: 0.05em;
-    color: #5c4a00;
-    background: #fffde7;
-    border-bottom: 1px solid #f9e87f;
-  }
-
   .results-layout {
     max-width: 780px;
     margin: 0 auto;
@@ -178,6 +129,7 @@ import DatasetMethodology from "../content/dataset-methodology.md";
   /* ===== Section Tabs ===== */
   .section-tabs {
     display: flex;
+    align-items: center;
     gap: 0;
     border-bottom: 1px solid #ccc;
     position: sticky;
@@ -185,6 +137,13 @@ import DatasetMethodology from "../content/dataset-methodology.md";
     background: white;
     font-family: var(--font-mono);
     font-size: 0.78rem;
+    flex-wrap: wrap;
+  }
+
+  .tab-sep {
+    color: #ccc;
+    padding: 0 0.5rem;
+    user-select: none;
   }
 
   .tab-btn {
