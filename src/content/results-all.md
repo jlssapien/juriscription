@@ -1,77 +1,77 @@
-# Results
+# Project Overview and Background
 
-> Findings from comparing the FDA Orange Book (US) and MHRA register (UK). These results are derived from the datasets described below and are subject to the limitations outlined at the end of this page. They should be read as observations about the data rather than definitive statements about drug availability in either country.
+Melatonin, an extremely useful sleep aid, is not available over the counter in the UK. Ambroxol, an extremely useful cough suppressant, is unavailable in the US. Modern, effective, Bemotrizinol sunscreen is banned in the US. Drug availability discrepancies have measurable consequences. A 2020 [study of cancer drug access](https://pmc.ncbi.nlm.nih.gov/articles/PMC7464890/), for instance, found that marketing approval came on average 242 days later in Europe than in the US. For two drugs alone (ipilimumab for melanoma, abiraterone for prostate cancer), the delay in European patient access may have led to a potential loss of more than 30,000 life-years. The registration delay between EMA and FDA accounted for an estimated 8,639 of those life-years. There are presumably hundreds of other such cases for both life critical and non life critical drugs.
 
----
+Though there are various reasons why this may be the case, many approval and access discrepancies arise from the mechanics of global regulatory systems. In the US, EU, and UK, this regulatory ecosystem is managed by the The US Food and Drug Administration (FDA), The European Medicines Agency (EMA), and The UK Medicines and Healthcare Products Regulatory Agency (MHRA), respectively. In the last decade, a series of regulatory recognition agreements have been introduced to streamline the approval process. For instance, Post-Brexit, the UK launched the [International Recognition Procedure (IRP)](https://pharmaphorum.com/news/mhras-post-brexit-mutual-recognition-framework-goes-live) in January 2024, allowing the MHRA to consider assessments from trusted regulators when reviewing applications. This ideally reduces approval timelines to 60-110 days versus the standard 150 days. Regulatory reliance pathways like the IRP allow regulators to consider the clinical and efficacy assessments performed by Reference Regulatory Authorities (RRAs) whose reviews are considered [rigorous enough to rely upon](https://www.icmra.info/drupal/en/strategicinitatives/reliance/statement).
 
-## Data Sources
+The goal of the project was to identify "low-hanging fruit" - drug availability discrepancies across major regulatory jurisdictions focusing on medications approved in some regions but not others. The argument being, if regulatory recognition agreements between jurisdictions facilitate the approval of drugs already validated elsewhere, an automated analysis comparing drug approval databases across FDA, EMA, and MHRA could identify promising candidates for cross-jurisdictional approval to facilitate faster approval times, with the eventual target of automating the paperwork-submitting pipeline as well.
 
-| Dataset | Products | Unique Active Substances | Source | Downloaded |
-|---------|----------|------------------------|--------|------------|
-| FDA Orange Book | 47,780 | ~1,878 | FDA Products.txt | Jan 2026 |
-| UK MHRA | 29,226 | ~2,964 | FOI request FOI2025_00058 (680-page PDF) | Dec 2025 |
+This page presents the results of that comparison. The analysis compared the FDA Orange Book against a list of UK marketing authorisations obtained from the MHRA via Freedom of Information request. Substances were matched across the two databases, individual products were scored for similarity, and the legal status of matched substances was compared between the two countries. The Methods page describes how each step was done.
 
-The FDA Orange Book covers drugs approved via New Drug Applications (NDAs) and Abbreviated New Drug Applications (ANDAs). It does not include biologics (which are in a separate BLA database), most OTC monograph drugs, or compounded medications. The MHRA dataset covers all medicines granted a marketing authorisation in the UK, obtained via a Freedom of Information request.
+# Summary of findings
 
-The FDA dataset has one row per product. The MHRA dataset has one row per *ingredient* per product — a two-ingredient drug generates two rows sharing the same Authorisation Number.
+About 1,323 active substances appeared in both databases. The US database held about 1,400 substances the UK database did not, and the UK database held about 1,600 the US database did not. Whether those one-sided substances are actually unavailable in the other country, or simply absent from the specific database that was checked, depends on the limitations described below; some of the gaps reflect database scope rather than real differences in availability.
 
----
+Of the 1,323 substances present in both, 101 showed a difference in legal status worth looking at. In each of these cases, one country treats the substance as requiring a prescription while the other allows at least some products of the same substance to be sold without one. The most common pattern, accounting for 60 of the 101, is the UK having reclassified some products to pharmacy or general-sale access while the US continues to require a prescription. The second most common pattern, 23 substances, runs the other way. Smaller patterns account for the remaining 18.
 
-## Substance-Level Overlap
+At higher resolution, the analysis also produced individual dose pairings: 68 cases at high matching confidence (identical ingredient and identical strength) across 33 substances, and a wider net at medium confidence covering 127 substances. The detailed sections below list the substances and pairings.
 
-Matching was performed on International Nonproprietary Names (INN) using a six-layer approach: exact match, UK-to-US spelling conversion (e.g. aluminium/aluminum), salt stripping (~65 qualifier terms removed), multi-ingredient reconstruction, ATC enrichment, and fuzzy matching.
+## Can drug approval discrepancy discovery be automated?
 
-| Category | Count |
-|----------|-------|
-| Matched in **both** countries | **1,323** |
-| Found in **US only** | **1,414** |
-| Found in **UK only** | **1,641** |
+In short, we found some low hanging fruit, but overall the complexity of the domain and messy data interoperability made the project an instructive failure. 
 
-Over 55% of active substances in these datasets are unique to one country. This figure reflects the contents of these specific databases — it does not necessarily mean those substances are unavailable in the other country through other regulatory pathways not captured here (see Limitations).
+While the ideal goal of this project was to answer the above question with some confidence, a subsequent goal was to lay out enough of the methodology and findings to continue the project with more capable AI tools, either ourselves or in passing it on to courageous souls.
 
----
 
-## Product-Level Matching
+# Limitations
 
-For every individual product, the closest counterparts in the other country were scored:
+These results should be interpreted with the following caveats in mind, not least of which is that much if not all of this research was conducted by various Claude models to test their capabilities.
 
-```
-total_score = 0.60 × inn_score + 0.40 × strength_score
-```
+## Data source limitations
 
-- **INN score (60%):** Jaccard similarity on normalised INN sets
-- **Strength score (40%):** Log-ratio closeness after unit harmonisation
+- **The FDA Orange Book is not a complete list of US-approved drugs.** It covers NDAs and ANDAs but excludes biologics (BLAs), most OTC monograph drugs, insulin products approved before 2020, and compounded medications. A substance appearing as "US-only" or "UK-only" in our data may simply reflect which database it falls under, not its actual availability.
+- **The MHRA dataset was extracted from a PDF.** The original data was supplied as a 680-page landscape PDF generated from Excel. While extraction was verified and 43 rows were manually corrected, some errors may remain. The extraction has been independently replicated.
+- **Both datasets are snapshots.** The FDA data was downloaded January 2026 and the MHRA data December 2025. Regulatory status can change. Drugs may be reclassified, approved, or withdrawn after these dates.
+- **The MHRA dataset may include products no longer actively marketed.** A marketing authorisation can remain on the register even if the product is not commercially available. The legal status reflects the authorisation, not necessarily current market availability.
 
-| Direction | Total Match Rows | Perfect Scores (1.0) |
-|-----------|-----------------|---------------------|
-| FDA → MHRA | 192,051 | 66,010 (36.0%) |
-| MHRA → FDA | 83,942 | 37,752 (47.1%) |
+## Matching limitations
 
-### Confidence Tiers
+- **Route of administration is absent from the MHRA data.** The matching algorithm cannot distinguish between tablets and injections of the same drug at the same dose. This leads to some misleading pairings. For example, oral paracetamol (GSL in the UK) matched to intravenous acetaminophen (RX in the US). In reality, the oral forms have the same legal status in both countries.
+- **Dosage form is not compared.** Tablets, capsules, creams, injections, and inhalers of the same drug and strength are treated as equivalent matches. A cream classified GSL may be matched to an injection classified RX. Technically the same active ingredient at the same concentration, but clinically and regulatorily quite different.
+- **Strength parsing is imperfect.** 1,289 FDA entries (~2.7%) have complex strength strings that could not be parsed. These receive a neutral score of 0.5, which may cause them to appear as medium-confidence matches when they would otherwise be high or low.
+- **Bidirectional matching is not reconciled.** The FDA-to-MHRA and MHRA-to-FDA match tables are independent one-way lookups. A substance may appear as a discrepancy in one direction but not the other, depending on which specific products are matched.
+- **"Same substance" is determined by INN, not by indication.** Two products with the same INN and strength may be approved for entirely different indications in each country. The legal status may reflect the approved use, not the molecule itself.
 
-| Tier | Definition | FDA→MHRA | MHRA→FDA |
-|------|-----------|----------|----------|
-| HIGH | INN = 1.0 AND strength = 1.0 | 65,997 | 37,724 |
-| MEDIUM | INN = 1.0 AND total ≥ 0.60, or INN ≥ 0.50 AND total ≥ 0.70 | 101,535 | 36,765 |
-| LOW | Any other match | 15,932 | 5,692 |
-| NONE | No match found | 8,587 | 3,761 |
+## Interpretation caveats
 
----
+- **A legal status discrepancy does not necessarily mean patients have different access.** A drug classified POM in the UK may still be widely prescribed and easily obtained via a GP appointment. Conversely, an OTC drug in the US may be unaffordable without insurance. Legal classification is one dimension of access, not the whole picture.
+- **The UK P (Pharmacy) classification is treated as "non-prescription" throughout.** While P drugs do not require a prescription, they do require a pharmacist to be present and may involve a consultation. This is a meaningfully different level of access than US OTC, where products can be bought from any shop shelf. Treating P as equivalent to OTC slightly overstates the accessibility gap.
+- **Some apparent discrepancies reflect formulation differences, not policy differences.** When a UK GSL tablet is matched to a US RX injection, the discrepancy is real in the data but misleading as a policy comparison. We have flagged the most prominent cases (e.g. paracetamol) but similar issues may exist elsewhere in the tables.
+- **The "UK more accessible" and "US more accessible" labels describe the data, not a judgement.** Different countries make different regulatory decisions for different reasons, including differences in healthcare systems, prescribing cultures, and risk tolerances. Neither approach is inherently better.
+- **Medium confidence matches should be treated with more caution.** These pairings share the same active ingredient but may differ in strength, and the strength differences can sometimes mean the products are not truly comparable (e.g. a 5% topical cream matched to a 200 mg oral tablet of the same substance).
 
-## Legal Status Classifications
+## How to do better than us
 
-The two countries use different systems to classify whether a drug requires a prescription:
+To distinguish drugs across jurisdictions with confidence would likely require domain experts with pharmaceutical or biomedical qualifications reviewing these hundreds of thousands of drugs, verifying from experience what is an active ingredient and what is a salt or other inactive ingredient, likely requiring hundreds or thousands of hours of work. Similarly, domain experts in multi-jurisdictional pharmaceutical regulation to interpret status categories correctly. Or failing this, a dedicated (and vetted) AI tool for doing so.
+
+We have released a fairly complete data pipeline with (unfortunately) some manual steps we didn't manage to codify. It's CC0.
+
+We provide a more lengthy description of the issues and process on the Methods page. Read on to descend into pharma data hell.
+
+# Legal Status Systems
+
+Between the US and UK, the two countries do not classify drug availability the same way, and the comparison below cannot be read without knowing what each label means. The US has two tiers: RX and OTC. The UK has three: POM, P, and GSL. The mapping between the two systems is not exact, and one of the UK categories has no US equivalent.
 
 | Tier | US (FDA) | UK (MHRA) |
 |------|----------|-----------|
 | Prescription | RX | POM (Prescription Only Medicine) |
-| Non-prescription | OTC | P (Pharmacy — pharmacist oversight), GSL (General Sales List) |
+| Non-prescription | OTC | P (Pharmacy with pharmacist oversight), GSL (General Sales List) |
 
 The UK has a three-tier system. **GSL** products can be sold in supermarkets with no pharmacist involvement. **P** products can be sold without a prescription but only from a pharmacy under pharmacist supervision. **POM** requires a doctor's prescription. The US has only two tiers: OTC and RX. The UK's P classification has no direct US equivalent.
 
 For the discrepancy analysis below, we treat RX and POM as equivalent (prescription-required) and OTC, P, and GSL as equivalent (non-prescription). A "discrepancy" is any matched product pair where one side is prescription and the other is non-prescription.
 
-### Discrepancy Severity
+## Discrepancy Severity
 
 Not all discrepancies are equally significant. We distinguish two levels:
 
@@ -80,13 +80,94 @@ Not all discrepancies are equally significant. We distinguish two levels:
 | **EXTREME** | GSL ↔ RX | A drug sold in UK supermarkets with no pharmacist involvement, but requiring a prescription in the US (or vice versa) |
 | **MODERATE** | P ↔ RX, or OTC ↔ POM | A drug available from a UK pharmacy (with pharmacist oversight) but requiring a US prescription, or a US OTC drug requiring a UK prescription |
 
-EXTREME cases represent the widest regulatory gap — one country considers the product safe enough for unrestricted sale while the other requires a doctor's involvement.
+EXTREME cases represent the widest regulatory gap. One country considers the product safe enough for unrestricted sale while the other requires a doctor's involvement.
 
----
+# Substance-Level Overlap
 
-## Substance-Level Discrepancy Overview
+Before counting how many substances the two countries share, the records had to be matched. The same drug can appear under different names across the two databases, with different salts, different spellings, or different brand-name conventions, so a series of matching steps were used to bring them into alignment. The details of those steps are on the Methods page; the figures below are what those steps produced.
 
-A separate analysis examined all 1,323 matched substance pairs at the substance level (rather than individual product matches) and classified each pair's regulatory relationship. Of these, **101 substances** showed a discrepancy of interest — meaning the legal status in one country includes non-prescription access while the other does not.
+| Category | Count |
+|----------|-------|
+| Matched in **both** countries | **1,323** |
+| Found in **US only** | **1,414** |
+| Found in **UK only** | **1,641** |
+
+Over half of the substances in these two datasets are unique to one country. That figure reflects the contents of these specific databases, not necessarily what is or is not available to patients in either country. Several of the limitations described above bear on how to read these counts.
+
+# Country-Exclusive Substances
+
+The substances that appeared in only one of the two databases break down further by category and by legal status. The tables below show what kinds of substances are in each one-sided group, and how the legal status is distributed within each group. The biologics imbalance in particular reflects what each database covers rather than what is actually available.
+
+## UK-only (1,641 substances in this dataset)
+
+| Category | Count |
+|----------|-------|
+| Standard drugs | 1,375 |
+| Biologics/vaccines | 237 |
+| Herbal/botanical | 22 |
+| Radiopharmaceutical | 7 |
+
+By UK legal status:
+
+| Status | Count |
+|--------|-------|
+| POM only | 1,233 |
+| GSL only | 156 |
+| P only | 109 |
+| GSL and P | 50 |
+| P and POM | 44 |
+| GSL, P and POM | 39 |
+| GSL and POM | 10 |
+
+Of the 1,641 UK-only substances, 75% (1,233) are prescription-only. The remaining 25% include substances available as GSL or P. Many of these are traditional remedies, herbal products, or common ingredients (e.g. activated charcoal, almond oil, capsicum) that the FDA Orange Book does not track because they fall outside the NDA/ANDA approval pathway.
+
+## FDA-only (894 substances in this dataset)
+
+| Category | Count |
+|----------|-------|
+| Standard drugs | 867 |
+| Radiopharmaceutical | 25 |
+| Biologics/vaccines | 2 |
+
+By US legal status:
+
+| Status | Count |
+|--------|-------|
+| RX only | 857 |
+| OTC only | 33 |
+| Both OTC and RX | 4 |
+
+96% of FDA-only substances are prescription-only. The 33 OTC-only substances with no UK equivalent may include products approved under the OTC monograph pathway that happen to also appear in the Orange Book, or drugs that have simply never been marketed in the UK.
+
+The large imbalance in biologics (237 UK-only vs 2 FDA-only) is primarily a data source artefact: US biologics are regulated under Biologics License Applications (BLAs), which are in a separate database not included in the Orange Book. This does not mean those biologics are unavailable in the US.
+
+## Drugs Still in UK, Discontinued in US
+
+Of the 1,641 MHRA substances with no active FDA match, 78 (4.8%) were found in the FDA's discontinued products list. These may represent drugs still available to UK patients that US patients have lost access to, though discontinuation can reflect commercial decisions rather than safety concerns. The remaining 95.2% have no FDA counterpart past or present in the Orange Book.
+
+# Product-Level Matching
+
+After matching at the substance level, the analysis also looked at individual products to see how close any given product in one country was to its closest counterpart in the other. Each product pair was scored for similarity in active ingredients and dose, and matches were sorted into three confidence tiers based on that score. The scoring formula and the details of how similarity is calculated are on the Methods page.
+
+A HIGH confidence match means the two products share an identical set of active ingredients and an identical dose. A MEDIUM confidence match means the ingredients match but the dose is similar rather than identical, or the ingredients overlap closely without being identical and the dose is reasonably close. A LOW confidence match is any weaker match. NONE means no match was found at all.
+
+The totals at each tier are below.
+
+| Direction | Total Match Rows | Perfect Scores (1.0) |
+|-----------|-----------------|---------------------|
+| FDA → MHRA | 192,051 | 66,010 (36.0%) |
+| MHRA → FDA | 83,942 | 37,752 (47.1%) |
+
+| Tier | FDA→MHRA | MHRA→FDA |
+|------|----------|----------|
+| HIGH | 65,997 | 37,724 |
+| MEDIUM | 101,535 | 36,765 |
+| LOW | 15,932 | 5,692 |
+| NONE | 8,587 | 3,761 |
+
+# Substance-Level Discrepancy Overview
+
+The substance-level analysis groups all 1,323 matched pairs by what kind of legal-status difference they show, if any. The 101 substances counted as discrepancies of interest are spread across four patterns. The remaining 1,222 either share the same legal status in both countries or have mixed access on both sides without a clean prescription-versus-non-prescription split.
 
 | Category | Count | Meaning |
 |----------|-------|---------|
@@ -97,21 +178,19 @@ A separate analysis examined all 1,323 matched substance pairs at the substance 
 
 The remaining 1,222 matched pairs showed no discrepancy: 1,137 were prescription-only in both countries, 55 were non-prescription in both, and 30 had other mixed patterns where both countries offered some non-prescription access.
 
-The 60 "UK mixed" substances are particularly notable. These are cases where the UK has reclassified certain formulations or strengths from POM to P or GSL — making them available without prescription — while the same substance remains entirely prescription-only in the US. This is the most common pattern of divergence in these datasets.
+The 60 "UK mixed" substances are cases where the UK has reclassified certain formulations or strengths from POM to P or GSL (making them available without prescription) while the same substance remains entirely prescription-only in the US. This is the most common pattern of divergence in these datasets.
 
-### Strength-Threshold Discrepancies
+## Strength-Threshold Discrepancies
 
-Within the 101 discrepant substances, **23** also exhibit a strength-threshold pattern: the same drug is available at the same numerical strength in both countries, but at different legal tiers. For example, sildenafil at 50 mg is P (pharmacy) in the UK but RX in the US — identical molecule, identical dose, different regulatory classification. These cases are the clearest examples of a genuine policy disagreement rather than a data-matching artefact, though differences in approved indications or dosage forms may still be a factor.
+Within the 101 discrepant substances, **23** also exhibit a strength-threshold pattern: the same drug is available at the same numerical strength in both countries, but at different legal tiers. For example, sildenafil at 50 mg is P (pharmacy) in the UK but RX in the US. Identical molecule, identical dose, different regulatory classification. These cases involve a genuine policy disagreement rather than a data-matching artefact, though differences in approved indications or dosage forms may still be a factor.
 
 The substances with strength-threshold discrepancies include: Amiodarone, Calcium Gluconate, Chloroquine, Fluconazole, Isosorbide Dinitrate, Isosorbide Mononitrate, Mebendazole, Naproxen, Promethazine, Sildenafil, Simvastatin, Tadalafil, Tamsulosin, Ulipristal, and Zolmitriptan. Many of these also appear in the dose-pairing tables below.
 
----
+# Legal Discrepancies: High Confidence
 
-## Legal Discrepancies: High Confidence
+At high matching confidence (identical ingredient set and identical dose), 68 dose pairings across 33 substances showed a legal-status difference between the two countries. After deduplicating branded generics, the tables below list the pairings, split by which direction the difference runs.
 
-These are dose pairings where the matched products have identical active ingredients and identical strength (confidence = HIGH), but the two countries disagree on whether a prescription is required. After deduplicating branded generics, there are **68 dose pairings** across **33 substances**.
-
-### UK More Accessible — 44 dose pairings
+## UK More Accessible (44 dose pairings)
 
 *Available without prescription in the UK (Pharmacy or General Sale), but appears to require a prescription in the US based on these datasets.*
 
@@ -162,17 +241,17 @@ These are dose pairings where the matched products have identical active ingredi
 | 43 | Ulipristal | 30 mg | P | 30 mg | RX |
 | 44 | Zolmitriptan | 2.5 mg | P | 2.5 mg | RX |
 
-#### Notable cases
+### Notable cases
 
-- **Sildenafil** (50 mg) and **Tadalafil** (10 mg) — erectile dysfunction drugs available from UK pharmacies since 2018/2021; prescription-only in the US
-- **Sumatriptan** (50 mg) and **Zolmitriptan** (2.5 mg) — migraine treatments; UK pharmacy sale since 2006
-- **Simvastatin** (10–80 mg) — cholesterol; the UK permitted pharmacy-sale simvastatin; the US has never approved an OTC statin
-- **Codeine** (15 mg) — available as a pharmacy medicine in the UK; prescription-only in the US
-- **Ulipristal** (30 mg) — emergency contraception (ellaOne); UK pharmacy sale, US prescription-only
-- **Chloroquine** and **Atovaquone/Proguanil** — antimalarials available from UK pharmacies for travel prophylaxis; prescription-only in the US
-- **Paracetamol/Acetaminophen** — GSL in the UK at 500–1000 mg; the US products matched here are IV formulations (10 mg/ml), which are RX. Oral acetaminophen is OTC in the US, so these pairings reflect a dosage-form mismatch rather than a true policy disagreement (see Limitations)
+- **Sildenafil** (50 mg) and **Tadalafil** (10 mg): erectile dysfunction drugs available from UK pharmacies since 2018/2021; prescription-only in the US
+- **Sumatriptan** (50 mg) and **Zolmitriptan** (2.5 mg): migraine treatments; UK pharmacy sale since 2006
+- **Simvastatin** (10–80 mg): cholesterol; the UK permitted pharmacy-sale simvastatin; the US has never approved an OTC statin
+- **Codeine** (15 mg): available as a pharmacy medicine in the UK; prescription-only in the US
+- **Ulipristal** (30 mg): emergency contraception (ellaOne); UK pharmacy sale, US prescription-only
+- **Chloroquine** and **Atovaquone/Proguanil**: antimalarials available from UK pharmacies for travel prophylaxis; prescription-only in the US
+- **Paracetamol/Acetaminophen**: GSL in the UK at 500–1000 mg; the US products matched here are IV formulations (10 mg/ml), which are RX. Oral acetaminophen is OTC in the US, so these pairings reflect a dosage-form mismatch rather than a true policy disagreement (see Limitations)
 
-### US More Accessible — 24 dose pairings
+## US More Accessible (24 dose pairings)
 
 *Available without prescription in the US (OTC), but appears to require a prescription in the UK (POM) based on these datasets.*
 
@@ -203,25 +282,23 @@ These are dose pairings where the matched products have identical active ingredi
 | 23 | Paracetamol | 650 mg | POM | 650 mg | OTC |
 | 24 | Ranitidine | 150 mg | POM | 150 mg (base eq) | OTC |
 
-#### Notable cases
+### Notable cases
 
-- **Famotidine** (20 mg), **Cimetidine** (200 mg), **Ranitidine** (150 mg) — H2 blockers; OTC in the US, POM in the UK
-- **Esomeprazole** (20 mg), **Lansoprazole** (15 mg), **Omeprazole** (20 mg as POM) — proton pump inhibitors switched to OTC in the US
-- **Levonorgestrel** (1.5 mg) — emergency contraception (Plan B); OTC in the US, but POM for some UK formulations
-- **Loratadine**, **Levocetirizine**, **Fexofenadine** — antihistamines; OTC in the US, some UK formulations still POM
-- **Fluticasone** (27.5 mcg) — nasal steroid (Flonase); US OTC, UK POM at this formulation
+- **Famotidine** (20 mg), **Cimetidine** (200 mg), **Ranitidine** (150 mg): H2 blockers; OTC in the US, POM in the UK
+- **Esomeprazole** (20 mg), **Lansoprazole** (15 mg), **Omeprazole** (20 mg as POM): proton pump inhibitors switched to OTC in the US
+- **Levonorgestrel** (1.5 mg): emergency contraception (Plan B); OTC in the US, but POM for some UK formulations
+- **Loratadine**, **Levocetirizine**, **Fexofenadine**: antihistamines; OTC in the US, some UK formulations still POM
+- **Fluticasone** (27.5 mcg): nasal steroid (Flonase); US OTC, UK POM at this formulation
 
-#### Mixed-direction substances
+### Mixed-direction substances
 
-Some substances appear on both lists — more accessible in the UK at some dose pairings and more accessible in the US at others. At high confidence these are **Fexofenadine**, **Ibuprofen**, **Loperamide**, **Omeprazole**, and **Paracetamol**. This typically reflects different formulations or branded products having different legal statuses within the same country (e.g. a UK ibuprofen suspension classified GSL while some other ibuprofen products are POM).
+Some substances appear on both lists. They are more accessible in the UK at some dose pairings and more accessible in the US at others. At high confidence these are **Fexofenadine**, **Ibuprofen**, **Loperamide**, **Omeprazole**, and **Paracetamol**. This typically reflects different formulations or branded products having different legal statuses within the same country (e.g. a UK ibuprofen suspension classified GSL while some other ibuprofen products are POM).
 
----
+# Legal Discrepancies: Medium Confidence
 
-## Legal Discrepancies: Medium Confidence
+At medium confidence (same active ingredient, similar but not identical strength), the broader net captures **809 dose pairings** across **127 substances**. Of these, **101 substances are new**: not found at high confidence. The tables below are summarised at substance level rather than listing all 809 dose pairings.
 
-At medium confidence (same active ingredient, similar but not identical strength), the broader net captures **809 dose pairings** across **127 substances**. Of these, **101 substances are new** — not found at high confidence. The tables below are summarised at substance level rather than listing all 809 dose pairings.
-
-### UK More Accessible — 80 substances
+## UK More Accessible (80 substances)
 
 *Available without prescription in the UK but appears to require a prescription in the US. Substances already found at high confidence are unmarked; new findings are marked **(NEW)**.*
 
@@ -308,19 +385,19 @@ At medium confidence (same active ingredient, similar but not identical strength
 | 79 | Tranexamic Acid **(NEW)** | P | RX |
 | 80 | Zinc **(NEW)** | P | RX |
 
-#### Notable new findings at medium confidence
+### Notable new findings at medium confidence
 
-- **Aciclovir** — cold sore cream is GSL (supermarket) in the UK; all aciclovir products are RX in the US
-- **Codeine / Paracetamol** (co-codamol) — available as a pharmacy medicine (P) in the UK at low-dose codeine; RX in the US
-- **Azithromycin** — the UK permitted pharmacy-sale azithromycin for chlamydia treatment; RX in the US
-- **Estradiol** — low-dose vaginal estradiol became available as P in the UK; RX in the US
-- **Tranexamic Acid** — for heavy menstrual bleeding; UK pharmacy sale, US prescription-only
-- **Nicotine** — nicotine replacement products (patches, gum) are GSL in the UK; the matched US formulations are RX
-- **Lidocaine** — topical anaesthetic available as P in the UK; RX in the US
-- **Folic Acid** — GSL/P in the UK; some US formulations are RX
-- **Penciclovir** — cold sore treatment; GSL in the UK, RX in the US
+- **Aciclovir**: cold sore cream is GSL (supermarket) in the UK; all aciclovir products are RX in the US
+- **Codeine / Paracetamol** (co-codamol): available as a pharmacy medicine (P) in the UK at low-dose codeine; RX in the US
+- **Azithromycin**: the UK permitted pharmacy-sale azithromycin for chlamydia treatment; RX in the US
+- **Estradiol**: low-dose vaginal estradiol became available as P in the UK; RX in the US
+- **Tranexamic Acid**: for heavy menstrual bleeding; UK pharmacy sale, US prescription-only
+- **Nicotine**: nicotine replacement products (patches, gum) are GSL in the UK; the matched US formulations are RX
+- **Lidocaine**: topical anaesthetic available as P in the UK; RX in the US
+- **Folic Acid**: GSL/P in the UK; some US formulations are RX
+- **Penciclovir**: cold sore treatment; GSL in the UK, RX in the US
 
-### US More Accessible — 24 substances
+## US More Accessible (24 substances)
 
 *Available without prescription in the US but appears to require a prescription in the UK.*
 
@@ -351,17 +428,17 @@ At medium confidence (same active ingredient, similar but not identical strength
 | 23 | Tioconazole **(NEW)** | POM | OTC |
 | 24 | Triamcinolone **(NEW)** | POM | OTC |
 
-#### Notable new findings at medium confidence
+### Notable new findings at medium confidence
 
-- **Naloxone** — the opioid overdose reversal drug; the US made it OTC in 2023; the UK still requires a prescription
-- **Adapalene** — acne retinoid (Differin); US OTC since 2016, UK POM
-- **Minoxidil** — hair loss treatment; US OTC (Rogaine), UK POM
-- **Ivermectin** — topical antiparasitic; US OTC, UK POM
-- **Oxybutynin** — overactive bladder patch; US OTC, UK POM
-- **Triamcinolone** — nasal steroid (Nasacort); US OTC, UK POM
-- **Adrenaline** — the US has OTC epinephrine inhalers (Primatene Mist); UK POM
+- **Naloxone**: the opioid overdose reversal drug; the US made it OTC in 2023; the UK still requires a prescription
+- **Adapalene**: acne retinoid (Differin); US OTC since 2016, UK POM
+- **Minoxidil**: hair loss treatment; US OTC (Rogaine), UK POM
+- **Ivermectin**: topical antiparasitic; US OTC, UK POM
+- **Oxybutynin**: overactive bladder patch; US OTC, UK POM
+- **Triamcinolone**: nasal steroid (Nasacort); US OTC, UK POM
+- **Adrenaline**: the US has OTC epinephrine inhalers (Primatene Mist); UK POM
 
-### Mixed Direction — 23 substances
+## Mixed Direction (23 substances)
 
 These substances have products classified as non-prescription in *both* countries, but at different formulations or strengths. Depending on which specific product is matched, the discrepancy can go either way.
 
@@ -391,11 +468,9 @@ These substances have products classified as non-prescription in *both* countrie
 | 22 | Povidone-Iodine **(NEW)** | P, POM | OTC, RX |
 | 23 | Ranitidine | GSL, POM | OTC, RX |
 
----
+# Maximum Divergence Cases (GSL ↔ RX)
 
-## Maximum Divergence Cases (GSL ↔ RX)
-
-The most extreme discrepancies are those where a drug is available as **General Sale** (sold in supermarkets, no pharmacist needed) in one country but **prescription-only** in the other. These represent the widest possible regulatory gap in these datasets.
+The most extreme discrepancies are those where a drug is available as **General Sale** (sold in supermarkets, no pharmacist needed) in one country but **prescription-only** in the other. These are the widest possible regulatory gap in this framework.
 
 At high confidence, 5 substances have at least one GSL ↔ RX pairing:
 
@@ -407,7 +482,7 @@ At high confidence, 5 substances have at least one GSL ↔ RX pairing:
 | 4 | Omeprazole | GSL, P, POM | OTC, RX |
 | 5 | Paracetamol | GSL, P, POM | OTC, RX |
 
-At medium confidence, a further **28 substances** exhibit GSL ↔ RX pairings. Of these, the clearest cases of UK GSL products matched to US RX-only products include:
+At medium confidence, a further **28 substances** exhibit GSL ↔ RX pairings. Of these, the cases of UK GSL products matched to US RX-only products include:
 
 | # | Substance | UK Status | US Status | Notes |
 |---|-----------|-----------|-----------|-------|
@@ -422,86 +497,4 @@ At medium confidence, a further **28 substances** exhibit GSL ↔ RX pairings. O
 | 9 | Thiamine | GSL, P | RX | Vitamin B1 |
 | 10 | Ibuprofen Lysine | GSL, P | RX | Neonatal ibuprofen formulation |
 
-Several of these reflect formulation differences rather than true policy disagreement — for example, the US RX ascorbic acid and thiamine products are injectable formulations, while the UK GSL products are oral tablets. The GSL ↔ RX gap is real in the data but may not indicate a policy divergence for equivalent products (see Limitations).
-
----
-
-## Drugs Still in UK, Discontinued in US
-
-Of the 1,641 MHRA substances with no active FDA match, 78 (4.8%) were found in the FDA's discontinued products list. These may represent drugs still available to UK patients that US patients have lost access to — though discontinuation can reflect commercial decisions rather than safety concerns. The remaining 95.2% have no FDA counterpart past or present in the Orange Book.
-
----
-
-## Country-Exclusive Substances
-
-### UK-only (1,641 substances in this dataset)
-
-| Category | Count |
-|----------|-------|
-| Standard drugs | 1,375 |
-| Biologics/vaccines | 237 |
-| Herbal/botanical | 22 |
-| Radiopharmaceutical | 7 |
-
-By UK legal status:
-
-| Status | Count |
-|--------|-------|
-| POM only | 1,233 |
-| GSL only | 156 |
-| P only | 109 |
-| GSL and P | 50 |
-| P and POM | 44 |
-| GSL, P and POM | 39 |
-| GSL and POM | 10 |
-
-Of the 1,641 UK-only substances, 75% (1,233) are prescription-only. The remaining 25% include substances available as GSL or P — many of these are traditional remedies, herbal products, or common ingredients (e.g. activated charcoal, almond oil, capsicum) that the FDA Orange Book does not track because they fall outside the NDA/ANDA approval pathway.
-
-### FDA-only (894 substances in this dataset)
-
-| Category | Count |
-|----------|-------|
-| Standard drugs | 867 |
-| Radiopharmaceutical | 25 |
-| Biologics/vaccines | 2 |
-
-By US legal status:
-
-| Status | Count |
-|--------|-------|
-| RX only | 857 |
-| OTC only | 33 |
-| Both OTC and RX | 4 |
-
-96% of FDA-only substances are prescription-only. The 33 OTC-only substances with no UK equivalent may include products approved under the OTC monograph pathway that happen to also appear in the Orange Book, or drugs that have simply never been marketed in the UK.
-
-The large imbalance in biologics (237 UK-only vs 2 FDA-only) is primarily a data source artefact: US biologics are regulated under Biologics License Applications (BLAs), which are in a separate database not included in the Orange Book. This does not mean those biologics are unavailable in the US.
-
----
-
-## Limitations
-
-These results should be interpreted with the following caveats in mind:
-
-### Data source limitations
-
-- **The FDA Orange Book is not a complete list of US-approved drugs.** It covers NDAs and ANDAs but excludes biologics (BLAs), most OTC monograph drugs, insulin products approved before 2020, and compounded medications. A substance appearing as "US-only" or "UK-only" in our data may simply reflect which database it falls under, not its actual availability.
-- **The MHRA dataset was extracted from a PDF.** The original data was supplied as a 680-page landscape PDF generated from Excel. While extraction was verified and 43 rows were manually corrected, some errors may remain. The extraction has been independently replicated.
-- **Both datasets are snapshots.** The FDA data was downloaded January 2026 and the MHRA data December 2025. Regulatory status can change — drugs may be reclassified, approved, or withdrawn after these dates.
-- **The MHRA dataset may include products no longer actively marketed.** A marketing authorisation can remain on the register even if the product is not commercially available. The legal status reflects the authorisation, not necessarily current market availability.
-
-### Matching limitations
-
-- **Route of administration is absent from the MHRA data.** The matching algorithm cannot distinguish between tablets and injections of the same drug at the same dose. This leads to some misleading pairings — for example, oral paracetamol (GSL in the UK) matched to intravenous acetaminophen (RX in the US). In reality, the oral forms have the same legal status in both countries.
-- **Dosage form is not compared.** Tablets, capsules, creams, injections, and inhalers of the same drug and strength are treated as equivalent matches. A cream classified GSL may be matched to an injection classified RX — technically the same active ingredient at the same concentration, but clinically and regulatorily quite different.
-- **Strength parsing is imperfect.** 1,289 FDA entries (~2.7%) have complex strength strings that could not be parsed. These receive a neutral score of 0.5, which may cause them to appear as medium-confidence matches when they would otherwise be high or low.
-- **Bidirectional matching is not reconciled.** The FDA-to-MHRA and MHRA-to-FDA match tables are independent one-way lookups. A substance may appear as a discrepancy in one direction but not the other, depending on which specific products are matched.
-- **"Same substance" is determined by INN, not by indication.** Two products with the same INN and strength may be approved for entirely different indications in each country. The legal status may reflect the approved use, not the molecule itself.
-
-### Interpretation caveats
-
-- **A legal status discrepancy does not necessarily mean patients have different access.** A drug classified POM in the UK may still be widely prescribed and easily obtained via a GP appointment. Conversely, an OTC drug in the US may be unaffordable without insurance. Legal classification is one dimension of access, not the whole picture.
-- **The UK P (Pharmacy) classification is treated as "non-prescription" throughout.** While P drugs do not require a prescription, they do require a pharmacist to be present and may involve a consultation. This is a meaningfully different level of access than US OTC, where products can be bought from any shop shelf. Treating P as equivalent to OTC slightly overstates the accessibility gap.
-- **Some apparent discrepancies reflect formulation differences, not policy differences.** When a UK GSL tablet is matched to a US RX injection, the discrepancy is real in the data but misleading as a policy comparison. We have flagged the most prominent cases (e.g. paracetamol) but similar issues may exist elsewhere in the tables.
-- **The "UK more accessible" and "US more accessible" labels describe the data, not a judgement.** Different countries make different regulatory decisions for different reasons, including differences in healthcare systems, prescribing cultures, and risk tolerances. Neither approach is inherently better.
-- **Medium confidence matches should be treated with more caution.** These pairings share the same active ingredient but may differ in strength, and the strength differences can sometimes mean the products are not truly comparable (e.g. a 5% topical cream matched to a 200 mg oral tablet of the same substance).
+Several of these reflect formulation differences rather than true policy disagreement. For example, the US RX ascorbic acid and thiamine products are injectable formulations, while the UK GSL products are oral tablets. The GSL ↔ RX gap is real in the data but may not indicate a policy divergence for equivalent products (see Limitations).

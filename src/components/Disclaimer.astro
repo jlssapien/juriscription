@@ -1,0 +1,64 @@
+---
+---
+
+<div id="disclaimer-overlay" class="disclaimer-overlay">
+  <div class="disclaimer-box">
+    <p class="disclaimer-text">
+      <strong>DISCLAIMER:</strong> this site compares the FDA Orange Book, the UK MHRA register, and EMA records to show which drugs are approved in one country but not another, and to match products across jurisdictions. It is a research artifact, not a clinical or regulatory reference, and not a basis for medical, prescribing, purchasing, or policy decisions. The data is a point-in-time snapshot (FDA January 2026; MHRA December 2025 FOI extract) and may already be out of date. Cross-country product matches are produced algorithmically and read the HIGH / MEDIUM / LOW confidence tiers as our internal scoring rather than regulatory or pharmacological equivalence as legal-status labels (RX, OTC, POM, P, GSL) do not map cleanly across jurisdictions. The method has known limits we have not hidden. See the methods page for more information. We would welcome serious efforts to replicate, audit, or correct this work.
+    </p>
+    <button type="button" id="disclaimer-dismiss" class="disclaimer-button">
+      I understand that AI is not a doctor, pharmacist, or lawyer
+    </button>
+  </div>
+</div>
+
+<style>
+  .disclaimer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(19, 19, 24, 0.75);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .disclaimer-box {
+    background: var(--color-grey, #ebebeb);
+    color: var(--color-black, #131318);
+    max-width: 640px;
+    width: 100%;
+    padding: 32px;
+    border: 1px solid var(--color-black, #131318);
+    font-family: var(--font-sans, Plain, system-ui);
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .disclaimer-text {
+    margin: 0 0 24px 0;
+  }
+
+  .disclaimer-button {
+    background: var(--color-accent, #3d7a6a);
+    color: white;
+    border: 1px solid var(--color-accent, #3d7a6a);
+    padding: 12px 18px;
+    font-family: var(--font-sans, Plain, system-ui);
+    font-size: 14px;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .disclaimer-button:hover {
+    background: #2f6357;
+    border-color: #2f6357;
+  }
+</style>
+
+<script is:inline>
+  document.getElementById('disclaimer-dismiss')?.addEventListener('click', () => {
+    document.getElementById('disclaimer-overlay')?.remove();
+  });
+</script>

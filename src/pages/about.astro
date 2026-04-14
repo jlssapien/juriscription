@@ -1,174 +1,188 @@
 ---
-import Sidebar from "../components/Sidebar.astro";
 import Layout from "../layouts/Layout.astro";
+import AboutContent from "../content/about.md";
 ---
 
-<Layout>
-  <Sidebar />
-  <div class="about">
-    <h2>A dashboard for big, real scientific news</h2>
-    <div class="text-stone-500 mb-8 -mt-2">by Gavin Leech, Lauren Gilbert, and Ulkar Aghayeva</div>
-    <p>
-      <br />A couple of years ago, Gavin became frustrated with science journalism. No one was pulling together results
-      across fields; the articles usually didn’t link to the original source; they didn't use probabilities (or even
-      report the sample size); they were usually credulous about preliminary findings (“...which species was it tested
-      on?”); and they essentially never gave any sense of the magnitude or the baselines (“how much better is this
-      treatment than the previous best?”). Speculative results were covered with the same credence as solid proofs. And
-      highly technical fields like mathematics were rarely covered at all, regardless of their practical or intellectual
-      importance. So he <a
-        target="_blank"
-        href="https://x.com/g_leech_/status/1731263549182206291"
-        style="color: var(--color-theme);">had a go</a
-      > at <a
-        target="_blank"
-        href="https://x.com/g_leech_/status/1864354552520007750"
-        style="color: var(--color-theme);">doing it</a
-      > himself.
-    </p>
-    <p>
-      This year, in partnership with Renaissance Philanthropy, we took a more systematic approach. So, how did the world change this year? What happened in each science? Which results are speculative and which are solid? Which are the biggest, if true? 
-    </p>
-    <!--<ul>
-      <li>
-        <b>It’s plausibly real</b>. The experiment or deployment genuinely happened; it’s not an artefact, p-hacked, or
-        pure PR.
-      </li>
-      <li>
-        <b>It plausibly generalises</b>. There’s a believable path toward: replication, scale-up across settings or
-        populations, and composability (the result can be used as a building block in larger systems).
-      </li>
-      <li>
-        <b>It bends the curve</b>. A result is Big If True if it would unlock new capability frontiers, flip constraints
-        into engineering problems, or create new control knobs for important systems.
-      </li>
-    </ul>-->
-    <p>
-      Our collection of 200 results is <a href="/" style="color: var(--color-theme);">here</a>. You can filter them by
-      field, by our best guess of the probability that they generalise, and by their impact if they do. We also include
-      bad news (in red).
-    </p>
-    <h2>Who are we?</h2>
-    <p>
-      Just three people but we cover a few fields. <a
-        target="_blank"
-        style="color: var(--color-theme);"
-        href="https://gleech.org">Gavin</a
-      > has a PhD in AI and has worked in epidemiology and metascience; <a
-        target="_blank"
-        style="color: var(--color-theme);"
-        href="https://x.com/notanastronomer">Lauren</a
-      > was a physicist and is now a development economist; <a
-        target="_blank"
-        style="color: var(--color-theme);"
-        href="https://www.ulkaraghayeva.com/about">Ulkar</a
-      > was a wet-lab biologist and is now a science writer touching many areas. For other domains we had expert help from
-      the <a
-        style="color: var(--color-theme);"
-        href="https://www.renaissancephilanthropy.org/big-if-true-science-accelerator">Big If True fellows</a
-      >, but mistakes are our own.
-    </p>
-    <p>
-      Site designed and developed by <a 
-        target="_blank" 
-        style="color: var(--color-theme)" 
-        href="https://webcraft.joodalop.com"
-      >
-        Judah</a
-      >.
-    </p>
+<Layout title="About">
+  <nav class="top-nav">
+    <div class="nav-left">
+      <a href="/drugs" class="site-name">JURISCRIPTION</a>
+      <a href="/drugs" class="nav-link">MAIN DATASET</a>
+      <a href="/fda-to-mhra" class="nav-link" data-nav-tip="This sheet matches each drug in the FDA dataset to the closest drug (based on ingredients and dosage) in the MHRA dataset.">FDA → MHRA</a>
+      <a href="/mhra-to-fda" class="nav-link" data-nav-tip="This sheet matches each drug in the MHRA dataset to the closest drug (based on ingredients and dosage) in the FDA dataset.">MHRA → FDA</a>
+      <span class="nav-sep">|</span>
+      <a href="/results" class="nav-link">RESULTS</a>
+      <a href="/methods" class="nav-link">METHODOLOGY</a>
+      <a href="/about" class="nav-link active">ABOUT</a>
+    </div>
+  </nav>
 
-    <h2>Data fields</h2>
-    <br />
-    <ul>
-      <li>
-        <b>Category</b>. e.g. AI | Medicine | Protein design
-      </li>
-      <li>
-        <b>Evidence type</b>: A rough classification into
-        <ul>
-            <li><i>Speculation</i> – a hypothesis, an untested theory, an unconfirmed claim. (Imagine someone having an idea for a new cytokine against cancer.)</li>
-            <li><i>Demo</i> – a preprint, a proof of concept, or an expensive demonstration. Imagine someone trying out the cytokine in vitro and it working.</li>
-            <li><i>RCT, etc</i> – a serious trial with careful causal inference. Most physics crucial experiments are “RCTs” in this sense. Imagine someone running a small clinical trial for the cytokine in humans.</li>
-            <li><i>Real-world evidence</i> – clear retrospective evidence from long-term mass deployment, and large demand actually met with large supply. (Imagine the cytokine becoming a clinical standard and getting lots of system-level evidence of effectiveness generated all the time.)</li>
-            <li><i>Established fact</i> – e.g. an accepted or formalised mathematical proof, or something true by definition like a legal judgment. (Hard to imagine a medicine reaching this level, but perhaps future personalised, precision-targeted versions with real-time in situ monitoring would, or now, maybe a 40-year-followup Cochrane review on its effect on all-cause mortality.)</li>
-        </ul>
-      <br>
-      <li>
-        <b>P(generalises)</b>. How likely we think it is to replicate or generalise, on priors. Preprint
-        mathematics from a serious researcher is often around 90%. Preclinical in-vitro drug candidates are, <a
-          style="color: var(--color-theme);"
-          href="https://humanspecificresearch.org/the-harsh-reality-of-drug-discovery-and-development/">notoriously</a
-        >, below 8%.
-      </li>
-      <li>
-        <p>
-          <b>big | true</b>. Every entry in the list is significant – scientifically, socially, or in delightfulness.
-          But we wanted to weight them by impact. The “big if true” field is our guess at how much the entry would
-          change the world if it generalised.
-        </p>
-        <ul>
-          <li>
-            We use Nate Silver’s “<a
-              href="https://www.lesswrong.com/posts/oAy72fcqDHsCvLBKz/ai-and-the-technological-richter-scale"
-              style="color: var(--color-theme);">Technology Richter Scale</a
-            >”, on which a 4 is something commercialisable but not category-defining (like a slightly better mousetrap),
-            a 6 is “on the short list for technology of the year” (Post-its, VCRs), and an 8 is on the short list for
-            technology of the century (cars, electricity, the internet).
-          </li>
-          <li>
-            This score includes not just the impact of the particular discovery, but also the consequences of the method
-            used in the discovery. (For instance, the <a
-              style="color: var(--color-theme);"
-              href="https://github.com/math-inc/strongpnt">formalisation</a
-            > of the Strong Prime Number Theorem has no particular social impact &mdash; but the implications of autoformalising
-            new mathematical results and the potential acceleration and hardening of many kinds of research warrants <i
-              >at least</i
-            > a 6 on the scale.)
-          </li>
-        </ul>
-      </li>
-      <li>
-        <b>Good/Bad.</b> Basic: whether we expect the net first-order effect of this to be positive for the world, or not.
-        (We don't claim to know what the <a
-          style="color: var(--color-theme);"
-          href="https://stefanschubert.substack.com/p/sleepwalk-bias-and-the-role-of-impulses"
-          >mitigations and responses</a
-        > will net out to.)
-      </li>
-    </ul>
-    <p>
-      Our judgments of P(generalises), big | true, and Good/Bad are avowedly subjective. If we got something wrong
-      please tell us at <a style="color: var(--color-theme);" href="mailto:gavin@arbresearch.com"
-        >gavin@arbresearch.com</a
-      >.
-    </p>
-    <p>
-      By design, the selection of results is biased towards being comprehensible to laymen, being practically useful now or soon, and against even the good kind of speculation. Interestingness is correlated with importance - but clearly there will have been many important but superficially uninteresting things that didn't enter our search.
-    </p>
-    <h2>Acknowledgments</h2>
-    <p>
-      We thank Alex German, Tim McGee, Daniel Litt, Eirini Malliaraki, Markus Strasser, Anders Sandberg, Niccolò Zanichelli, Tom
-      McCarthy, Ryan Marinelli, Lucia Asanache, Dron Hazra, Ronit Kanwar, and Paul Crowe for comments.
-    </p>
+  <div class="about-body">
+    <AboutContent />
   </div>
 </Layout>
 
-<style>
-  .about {
-    margin-left: calc(20rem + 100px);
-    padding: 2rem;
-    width: calc(100% - 20rem - 100px);
-    max-width: 46rem;
-    font-size: 18px;
-    line-height: 1.5em;
+<script>
+  const navTooltip = document.createElement("div");
+  navTooltip.className = "nav-tooltip";
+  navTooltip.style.display = "none";
+  document.body.appendChild(navTooltip);
+
+  document.querySelectorAll(".nav-link[data-nav-tip]").forEach((link) => {
+    link.addEventListener("mouseenter", () => {
+      const tip = (link as HTMLElement).dataset.navTip;
+      if (!tip) return;
+      navTooltip.textContent = tip;
+      navTooltip.style.display = "block";
+      const rect = (link as HTMLElement).getBoundingClientRect();
+      const pad = 4;
+      let x = rect.left;
+      const y = rect.bottom + pad;
+      const tw = navTooltip.offsetWidth;
+      if (x + tw > window.innerWidth - pad) x = window.innerWidth - tw - pad;
+      navTooltip.style.left = x + "px";
+      navTooltip.style.top = y + "px";
+    });
+    link.addEventListener("mouseleave", () => {
+      navTooltip.style.display = "none";
+    });
+  });
+</script>
+
+<style is:global>
+  /* ===== Top Navigation ===== */
+  .top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #ccc;
+    background: white;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
   }
 
-  @media (max-width: 1024px) {
-    .about {
-      margin-left: 0px;
-      width: 100%;
-      padding: 1.5rem;
-      font-size: 16px;
-    }
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .site-name {
+    font-weight: 700;
+    border: 1px solid #333;
+    padding: 0.15rem 0.5rem;
+    color: var(--color-black);
+    text-decoration: none;
+  }
+
+  .site-name:hover {
+    border-color: black;
+  }
+
+  .nav-link {
+    color: var(--color-black);
+    text-decoration: none;
+  }
+
+  .nav-link.active {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .nav-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ===== Page body ===== */
+  html, body {
+    background: white !important;
+    color: var(--color-black);
+  }
+
+  .about-body {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 6rem 2rem 6rem;
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    line-height: 1.8;
+    color: var(--color-black);
+  }
+
+  /* ===== Prose styles for markdown content ===== */
+  .about-body h1 {
+    font-family: var(--font-mono);
+    font-size: 1.0rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    line-height: 1.3;
+  }
+
+  .about-body h2 {
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 2.5rem 0 0.75rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--color-accent);
+  }
+
+  .about-body h2:first-of-type {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .about-body p {
+    margin-bottom: 1rem;
+  }
+
+  .about-body ul,
+  .about-body ol {
+    margin: 0.75rem 0 1rem 1.5rem;
+    padding: 0;
+  }
+
+  .about-body li {
+    margin-bottom: 0.3rem;
+  }
+
+  .about-body a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .about-body a:hover {
+    background: var(--color-accent-light);
+  }
+
+  .about-body strong {
+    font-weight: 700;
+  }
+
+  .about-body em {
+    font-style: italic;
+  }
+
+  /* ===== Nav Tooltip ===== */
+  .nav-tooltip {
+    position: fixed;
+    z-index: 200;
+    max-width: 300px;
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    pointer-events: none;
+    border: 1px solid #ccc;
+    background: white;
+    color: var(--color-black);
   }
 </style>

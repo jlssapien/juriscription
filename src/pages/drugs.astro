@@ -1,8 +1,10 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import Disclaimer from "../components/Disclaimer.astro";
 ---
 
 <Layout title="Drug Database">
+  <Disclaimer />
   <nav class="top-nav">
     <div class="nav-left">
       <a href="/drugs" class="site-name">JURISCRIPTION</a>
@@ -12,6 +14,7 @@ import Layout from "../layouts/Layout.astro";
       <span class="nav-sep">|</span>
       <a href="/results" class="nav-link">RESULTS</a>
       <a href="/methods" class="nav-link">METHODOLOGY</a>
+      <a href="/about" class="nav-link">ABOUT</a>
     </div>
   </nav>
 
