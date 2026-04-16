@@ -56,13 +56,13 @@ import Layout from "../layouts/Layout.astro";
   <section id="descriptor">
     <div class="content-tabs">
       <div class="tab-buttons">
-        <button class="tab-btn active" data-tab="guide">How to Read This Map</button>
+        <button class="tab-btn active" data-tab="about">About</button>
+        <button class="tab-btn" data-tab="guide">How to Read This Map</button>
         <button class="tab-btn" data-tab="glossary">Glossary</button>
         <button class="tab-btn" data-tab="agreements">Agreements</button>
-        <button class="tab-btn" data-tab="about">About</button>
       </div>
 
-      <div class="tab-content" id="tab-guide">
+      <div class="tab-content" id="tab-guide" style="display:none">
         <h3>Visual Encoding</h3>
         <p><strong>Arcs</strong> are curved lines connecting two countries and represent bilateral agreements or unilateral reliance pathways. Color indicates the agreement category. Solid lines mark active agreements; dashed lines indicate expired agreements or those still under negotiation.</p>
 
@@ -130,7 +130,7 @@ import Layout from "../layouts/Layout.astro";
         </table>
       </div>
 
-      <div class="tab-content" id="tab-about" style="display:none">
+      <div class="tab-content" id="tab-about">
         <h3>About This Project</h3>
         <p>This is a research project mapping the landscape of international pharmaceutical regulatory agreements and cooperation mechanisms. The visualization presents how drug regulatory authorities around the world formalize cooperation through mutual recognition agreements, reliance pathways, harmonization initiatives, and other mechanisms.</p>
 
@@ -1447,7 +1447,7 @@ const AGREEMENTS_DATA = {
 };
 </script>
 
-<script>
+<script is:inline>
 // ── Configuration ──────────────────────────────────────────────────
 
 const CATEGORY_COLORS = {
@@ -1605,6 +1605,7 @@ const _mapBounds = {
   ]]
 };
 function currentZoomK() { return _currentZoomK; }
+let _zoomBehavior = null;
 
 // Active filters
 const filters = {
@@ -1646,6 +1647,7 @@ async function init() {
     setupInteractions();
 
     window.addEventListener("resize", debounce(() => { resizeMap(); render(); }, 200));
+
   } catch (err) {
     document.getElementById("loading").textContent = "Error: " + err.message;
     console.error(err);
@@ -1744,7 +1746,16 @@ function buildMap() {
       g.selectAll(".country").attr("stroke-width", 0.25 / event.transform.k);
     });
 
+  _zoomBehavior = zoom;
   svg.call(zoom);
+
+  // Start zoomed in
+  var k0 = 2.8;
+  var t0 = d3.zoomIdentity
+    .translate(width / 2, height / 2)
+    .scale(k0)
+    .translate(-width / 2, -height / 2);
+  svg.call(zoom.transform, t0);
 }
 
 function resizeMap() {
