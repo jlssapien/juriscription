@@ -1,0 +1,3166 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Regulatory Map">
+  <nav class="top-nav">
+    <div class="nav-left">
+      <a href="/drugs" class="site-name">JURISCRIPTION</a>
+      <a href="/drugs" class="nav-link">MAIN DATASET</a>
+      <a href="/fda-to-mhra" class="nav-link" data-nav-tip="This sheet matches each drug in the FDA dataset to the closest drug (based on ingredients and dosage) in the MHRA dataset.">FDA &rarr; MHRA</a>
+      <a href="/mhra-to-fda" class="nav-link" data-nav-tip="This sheet matches each drug in the MHRA dataset to the closest drug (based on ingredients and dosage) in the FDA dataset.">MHRA &rarr; FDA</a>
+      <span class="nav-sep">|</span>
+      <a href="/results" class="nav-link">RESULTS</a>
+      <a href="/methods" class="nav-link">METHODOLOGY</a>
+      <a href="/regulatory-map" class="nav-link active">MAP</a>
+      <a href="/about" class="nav-link">ABOUT</a>
+    </div>
+  </nav>
+
+  <div class="reg-map">
+<div id="app">
+  <div id="main">
+    <button id="sidebar-toggle">&#9776;</button>
+    <div id="sidebar">
+      <div class="filter-group">
+        <h2>Country</h2>
+        <select id="country-filter">
+          <option value="all">All Countries</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <h2>Agreement Type</h2>
+        <div id="category-filters"></div>
+      </div>
+      <div class="filter-group">
+        <h2>Year Range</h2>
+        <div id="year-label">All years</div>
+        <div class="year-range-container">
+          <div class="year-range-track"><div class="active" id="year-track-active"></div></div>
+          <input type="range" id="year-min" min="1900" max="2030" value="1900">
+          <input type="range" id="year-max" min="1900" max="2030" value="2030">
+        </div>
+      </div>
+      <div class="filter-group">
+        <h2>Status</h2>
+        <div id="status-filters"></div>
+      </div>
+    </div>
+    <div id="map-container">
+      <div id="loading">Loading map data...</div>
+      <div id="tooltip"></div>
+      <div id="info-panel"></div>
+      <div id="legend"></div>
+    </div>
+  </div>
+  <section id="descriptor">
+    <div class="content-tabs">
+      <div class="tab-buttons">
+        <button class="tab-btn active" data-tab="guide">How to Read This Map</button>
+        <button class="tab-btn" data-tab="glossary">Glossary</button>
+        <button class="tab-btn" data-tab="agreements">Agreements</button>
+        <button class="tab-btn" data-tab="about">About</button>
+      </div>
+
+      <div class="tab-content" id="tab-guide">
+        <h3>Visual Encoding</h3>
+        <p><strong>Arcs</strong> are curved lines connecting two countries and represent bilateral agreements or unilateral reliance pathways. Color indicates the agreement category. Solid lines mark active agreements; dashed lines indicate expired agreements or those still under negotiation.</p>
+
+        <p><strong>Small arrows along arcs</strong> indicate direction of regulatory reliance. For unilateral agreements, arrows point from the relying country (A) toward the reference authority (B) whose assessments it draws on. Mutual agreements have no directional arrows.</p>
+
+        <p><strong>Country fills</strong> (colored shading) show membership in multilateral agreements. When a multilateral agreement passes the current filters, all member countries are shaded in the corresponding category color.</p>
+
+        <h3>Category Colors</h3>
+        <ul id="guide-colors"></ul>
+
+        <h3>Interacting with the Map</h3>
+        <p>Use the <strong>filter panel</strong> on the left to narrow by country, agreement category, year range, or status.</p>
+        <p><strong>Hover</strong> over an arc for a quick summary of the agreement. <strong>Hover</strong> over a country to see its name and agreement count.</p>
+        <p><strong>Click</strong> on an arc to open a detail panel with the full agreement description and source link. <strong>Click</strong> on a country to filter the map to that country and see all its agreements listed.</p>
+        <p><strong>EU agreements</strong> present a special case: the arc connects to Amsterdam (EMA) or Brussels (EU institutions), and all 27 EU member states highlight simultaneously.</p>
+      </div>
+
+      <div class="tab-content" id="tab-glossary" style="display:none">
+        <h3>Agreement Categories</h3>
+
+        <p><span class="glossary-term">Centralized Procedure</span><br>
+        Registration system where a single application is assessed by one body and the resulting marketing authorization is valid across all member states of the region or bloc. Distinct from harmonization (shared standards, separate national reviews) and recognition (accepting another authority's decision post hoc). Used by the EU (via EMA) and the GCC (via the Gulf Health Council). Note: GCC decisions function as recommendations per WHO TRS 1033, Section 5.5, though in practice GCC registration is valid across all 6 member states. In the EU model, the centralized procedure produces a single marketing authorization binding on all 27 member states.</p>
+
+        <p><span class="glossary-term">Confidentiality Arrangement</span> (also: Confidentiality Commitment)<br>
+        Legal framework allowing regulatory authorities to share non-public information, including commercially confidential data, unredacted inspection reports, and patient-level safety data. Prerequisite for substantive regulatory cooperation beyond publicly available assessment reports. FDA uses the term "Confidentiality Commitment" (CC); EMA uses "Confidentiality Arrangement" (CA). Subcategory of Enabling Agreement.</p>
+
+        <p><span class="glossary-term">Coordination Body</span><br>
+        International organizations and networks that coordinate regulatory activities, share information, and develop common approaches without themselves making approval decisions. Examples include ICMRA, IPRP, PIC/S, ICH, and ICDRA. Their membership indicates how connected a regulator is to the global network.</p>
+
+        <p><span class="glossary-term">Enabling Agreement</span><br>
+        Framework agreements that facilitate future regulatory cooperation, such as confidentiality arrangements and information-sharing memoranda. Without these, regulators cannot share commercially confidential data or patient-level safety information needed for substantive cooperation.</p>
+
+        <p><span class="glossary-term">Harmonization</span><br>
+        Alignment of technical requirements, guidelines, and standards across jurisdictions to reduce regulatory divergence. Creates shared requirements so a single dossier can satisfy multiple regulators, but each authority still conducts its own review. Examples include ICH guidelines and PIC/S GMP standards. In some regional harmonization systems, a centralized procedure exists where a single body assesses applications on behalf of all member states and the resulting authorization is valid across the region. Examples include the EU centralized procedure (EMA) and the GCC centralized drug registration. Note: the EAEU uses mutual recognition and decentralized procedures rather than a centralized procedure.</p>
+
+        <p><span class="glossary-term">Joint Assessment</span><br>
+        Work-sharing mechanism where the same application is submitted simultaneously to two or more NRAs, which divide review modules among themselves (e.g., quality, non-clinical, clinical) and share their scientific assessments. Participating NRAs combine their lists of questions to the manufacturer and base their respective independent regulatory decisions on the outcome of these assessments. Used by ZAZIBONA, EAC-MRH, ECOWAS-MRH, and ASEAN.</p>
+
+        <p><span class="glossary-term">Mutual Recognition Agreement (MRA)</span><br>
+        Bilateral or multilateral agreement where regulatory authorities formally accept each other's inspection results and/or regulatory assessments. Requires prior demonstration that both systems produce equivalent outcomes. In pharmaceuticals, MRAs typically cover GMP inspections rather than marketing authorizations.</p>
+
+        <p><span class="glossary-term">Recognition</span><br>
+        Formal acknowledgment of another regulatory authority's standards, processes, or approval decisions. Goes further than reliance: a regulator routinely accepts another's decision with no additional substantive assessment. Rare between sovereign states due to the trust and legal compatibility required.</p>
+
+        <p><span class="glossary-term">Reliance Pathway</span><br>
+        A structured process where one regulatory authority uses another's assessment as the basis for its own regulatory decision, without conducting a full independent review. The relying authority retains sovereignty and final decision-making responsibility. Can be unilateral (one direction) or mutual.</p>
+
+        <p><span class="glossary-term">Work-sharing</span><br>
+        Cooperative arrangements where regulatory authorities divide assessment workload and share the results, reducing duplication. All participating authorities actively conduct portions of the review in parallel, distinguishing this from reliance where one authority defers. Examples include the ACCESS Consortium and Project Orbis.</p>
+      </div>
+
+      <div class="tab-content" id="tab-agreements" style="display:none">
+        <input type="text" id="agreements-search" placeholder="Search agreements by name, category, country...">
+        <table id="agreements-table">
+          <thead>
+            <tr>
+              <th data-sort="name">Name</th>
+              <th data-sort="category">Category</th>
+              <th data-sort="year">Year</th>
+              <th data-sort="status">Status</th>
+              <th data-sort="parties">Parties</th>
+            </tr>
+          </thead>
+          <tbody id="agreements-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="tab-content" id="tab-about" style="display:none">
+        <h3>About This Project</h3>
+        <p>This is a research project mapping the landscape of international pharmaceutical regulatory agreements and cooperation mechanisms. The visualization presents how drug regulatory authorities around the world formalize cooperation through mutual recognition agreements, reliance pathways, harmonization initiatives, and other mechanisms.</p>
+
+        <p>These agreements shape how medicines are evaluated and approved globally. They can reduce duplication of regulatory effort, accelerate patient access to medicines, and enable resource-constrained authorities to leverage the expertise of established agencies.</p>
+
+        <p>The map draws on publicly available information from regulatory authorities, international organizations, and published literature. It is maintained as part of ongoing research at the intersection of regulatory science, international governance, and policy.</p>
+
+        <p>This project is produced by ARB Research with support from Emergent Ventures.</p>
+
+        <h3>Sources</h3>
+        <p>Agreement data was compiled from primary regulatory authority sources including the <a href="https://www.fda.gov/international-programs/international-arrangements" target="_blank" rel="noopener">FDA</a>, <a href="https://www.ema.europa.eu/en/partners-networks/international-activities/bilateral-interactions-non-eu-regulators" target="_blank" rel="noopener">EMA</a>, <a href="https://www.gov.uk/guidance/access-consortium" target="_blank" rel="noopener">MHRA</a>, <a href="https://www.tga.gov.au/international-collaboration" target="_blank" rel="noopener">TGA</a>, <a href="https://www.hsa.gov.sg/international-collaboration" target="_blank" rel="noopener">HSA</a>, <a href="https://www.swissmedic.ch/swissmedic/en/home/about-us/international-collaboration.html" target="_blank" rel="noopener">Swissmedic</a>, and <a href="https://www.canada.ca/en/health-canada/services/drugs-health-products/international-activities.html" target="_blank" rel="noopener">Health Canada</a>.</p>
+
+        <p>The agreement type taxonomy draws on the <a href="https://www.who.int/publications/m/item/annex-10-trs-1033" target="_blank" rel="noopener">WHO Good Reliance Practices (TRS 1033, Annex 10, 2021)</a>, the <a href="https://nap.nationalacademies.org/catalog/25594/regulating-medicines-in-a-globalized-world-the-need-for-increased-reliance" target="_blank" rel="noopener">National Academies report on regulating medicines in a globalized world (2020)</a>, and the <a href="https://www.icmra.info/drupal/en/reliance" target="_blank" rel="noopener">ICMRA Statement on Reliance</a>.</p>
+
+        <h3>Development &amp; Verification</h3>
+        <p>This map was built through iterative "vibe coding" with Claude Opus (Anthropic), where the entire codebase — data, visualization, and text — was generated and refined through conversational prompting rather than traditional software development.</p>
+
+        <p>Data accuracy was managed through a multi-agent team pipeline. For each round of additions, independent fact-checker agents verified every agreement's year, parties, regulatory function, and category assignment against primary sources, while a separate data-drafter agent structured entries from coverage reports. A cross-review agent then reconciled the drafted data against the verified facts, flagging discrepancies — this process caught two incorrect years, two miscategorized agreements, and a misdescribed regulatory mechanism before they reached the map. Glossary definitions were verified line-by-line against a local copy of the WHO TRS 1033 Annex 10. A final red-team review verified structural integrity and rendering correctness.</p>
+
+        <p>Despite this process, errors in agreement details, categorization, or coverage gaps may remain. Corrections and omissions can be reported to <a href="mailto:connect@sapien.institute">connect@sapien.institute</a>.</p>
+
+        <p>Last updated: February 2026</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+  </div>
+</Layout>
+
+<script is:inline src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script is:inline src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+<script is:inline>
+const AGREEMENTS_DATA = {
+  "entities": {
+    "EU": {
+      "arc_location": [50.8503, 4.3517],
+      "arc_location_ema": [52.3676, 4.9041],
+      "fill_countries": ["AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT","LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE"]
+    }
+  },
+  "country_coordinates": {
+    "US": [38.8951, -77.0364],
+    "GB": [51.5074, -0.1278],
+    "CA": [45.4215, -75.6972],
+    "AU": [-33.8688, 151.2093],
+    "JP": [35.6762, 139.6503],
+    "CH": [46.9480, 7.4474],
+    "SG": [1.3521, 103.8198],
+    "NZ": [-41.2866, 174.7756],
+    "IL": [31.7683, 35.2137],
+    "KR": [37.5665, 126.9780],
+    "CN": [39.9042, 116.4074],
+    "BR": [-15.7975, -47.8919],
+    "IN": [28.6139, 77.2090],
+    "ZA": [-25.7479, 28.2293],
+    "MX": [19.4326, -99.1332],
+    "AR": [-34.6037, -58.3816],
+    "SA": [24.7136, 46.6753],
+    "TR": [39.9334, 32.8597],
+    "TW": [25.0330, 121.5654],
+    "HK": [22.3193, 114.1694],
+    "MY": [3.1390, 101.6869],
+    "TH": [13.7563, 100.5018],
+    "ID": [6.2088, 106.8456],
+    "IR": [35.6892, 51.3890],
+    "JO": [31.9454, 35.9284],
+    "UA": [50.4501, 30.5234],
+    "NG": [9.0579, 7.4951],
+    "KE": [-1.2921, 36.8219],
+    "GH": [5.6037, -0.1870],
+    "TZ": [-6.7924, 39.2083],
+    "ZM": [-15.3875, 28.3228],
+    "ZW": [-17.8252, 31.0335],
+    "BW": [-24.6282, 25.9231],
+    "NA": [-22.5609, 17.0658],
+    "MZ": [-25.9692, 32.5732],
+    "MW": [-13.9626, 33.7741],
+    "CD": [-4.4419, 15.2663],
+    "AO": [-8.8390, 13.2894],
+    "MG": [-18.8792, 47.5079],
+    "MU": [-20.1609, 57.5012],
+    "SC": [-4.6796, 55.4920],
+    "SZ": [-26.3054, 31.1367],
+    "LS": [-29.3142, 27.4833],
+    "KM": [-11.7172, 43.2473],
+    "AT": [48.2082, 16.3738],
+    "BE": [50.8503, 4.3517],
+    "BG": [42.6977, 23.3219],
+    "HR": [45.8150, 15.9819],
+    "CY": [35.1856, 33.3823],
+    "CZ": [50.0755, 14.4378],
+    "DK": [55.6761, 12.5683],
+    "EE": [59.4370, 24.7536],
+    "FI": [60.1699, 24.9384],
+    "FR": [48.8566, 2.3522],
+    "DE": [52.5200, 13.4050],
+    "GR": [37.9838, 23.7275],
+    "HU": [47.4979, 19.0402],
+    "IE": [53.3498, -6.2603],
+    "IT": [41.9028, 12.4964],
+    "LV": [56.9496, 24.1052],
+    "LT": [54.6872, 25.2797],
+    "LU": [49.6117, 6.1300],
+    "MT": [35.8989, 14.5146],
+    "NL": [52.3676, 4.9041],
+    "PL": [52.2297, 21.0122],
+    "PT": [38.7223, -9.1393],
+    "RO": [44.4268, 26.1025],
+    "SK": [48.1486, 17.1077],
+    "SI": [46.0569, 14.5058],
+    "ES": [40.4168, -3.7038],
+    "SE": [59.3293, 18.0686],
+    "NO": [59.9139, 10.7522],
+    "IS": [64.1466, -21.9426],
+    "LI": [47.1660, 9.5554],
+    "RU": [55.7558, 37.6173],
+    "CL": [-33.4489, -70.6693],
+    "PE": [-12.0464, -77.0428],
+    "PG": [-6.3149, 143.9555],
+    "VN": [21.0278, 105.8342],
+    "PH": [14.5995, 120.9842],
+    "BN": [4.9031, 114.9398],
+    "BI": [-3.3731, 29.3644],
+    "RW": [-1.9403, 29.8739],
+    "UG": [0.3476, 32.5825],
+    "ET": [9.0250, 38.7469],
+    "SS": [4.8594, 31.5713],
+    "SO": [2.0469, 45.3182],
+    "EC": [-0.1807, -78.4678],
+    "GN": [9.6412, -13.5784],
+    "LR": [6.2907, -10.7605],
+    "SL": [8.4657, -13.2317],
+    "BD": [23.8103, 90.4125],
+    "BT": [27.4728, 89.6393],
+    "BF": [12.3714, -1.5197],
+    "CM": [3.8480, 11.5021],
+    "CI": [5.3600, -4.0083],
+    "GA": [0.3924, 9.4536],
+    "GM": [13.4549, -16.5790],
+    "GE": [41.7151, 44.8271],
+    "SD": [15.5007, 32.5599],
+    "SN": [14.7167, -17.4677],
+    "WHO": [46.2044, 6.1432],
+    "EG": [30.0444, 31.2357],
+    "AE": [24.45, 54.65],
+    "AG": [17.12, -61.85],
+    "AM": [40.18, 44.51],
+    "BB": [13.10, -59.61],
+    "BH": [26.22, 50.58],
+    "BJ": [6.50, 2.63],
+    "BS": [25.05, -77.34],
+    "BZ": [17.25, -88.77],
+    "BY": [53.90, 27.57],
+    "CF": [4.36, 18.56],
+    "CG": [-4.27, 15.28],
+    "CO": [4.71, -74.07],
+    "CU": [23.05, -82.35],
+    "CV": [14.93, -23.51],
+    "DJ": [11.59, 43.15],
+    "DM": [15.30, -61.39],
+    "ER": [15.34, 38.93],
+    "GD": [12.06, -61.75],
+    "GQ": [3.75, 8.78],
+    "GW": [11.86, -15.60],
+    "GY": [6.80, -58.16],
+    "HT": [18.97, -72.29],
+    "JM": [18.11, -77.30],
+    "KG": [42.87, 74.59],
+    "KH": [11.56, 104.92],
+    "KN": [17.30, -62.73],
+    "KW": [29.37, 47.98],
+    "KZ": [51.17, 71.43],
+    "LA": [17.97, 102.63],
+    "LC": [13.91, -60.98],
+    "MA": [34.02, -6.83],
+    "ML": [12.65, -8.00],
+    "MM": [19.76, 96.07],
+    "NE": [13.51, 2.11],
+    "OM": [23.61, 58.54],
+    "QA": [25.29, 51.53],
+    "SR": [5.85, -55.17],
+    "ST": [0.34, 6.73],
+    "TD": [12.13, 15.05],
+    "TG": [6.17, 1.23],
+    "TT": [10.50, -61.31],
+    "VC": [13.25, -61.20]
+  },
+  "agreements": [
+    {
+      "id": "us-eu-gmp-mra",
+      "name": "US-EU Mutual Recognition Agreement on GMP Inspections",
+      "category": "mra",
+      "subcategory": "gmp_inspection",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "EU"],
+      "year_signed": 1998,
+      "year_operational": 2017,
+      "status": "active",
+      "description": "MRA for mutual recognition of GMP inspections of pharmaceutical manufacturing facilities. Signed 1998, pharmaceutical annex became operational Nov 2017, fully operational July 2019. Covers human medicines; expanded to veterinary medicines in 2023.",
+      "source_url": "https://www.ema.europa.eu/en/human-regulatory-overview/research-development/compliance-research-development/good-manufacturing-practice/mutual-recognition-agreements-mra"
+    },
+    {
+      "id": "eu-au-gmp-mra",
+      "name": "EU-Australia Mutual Recognition Agreement on GMP",
+      "category": "mra",
+      "subcategory": "gmp_inspection",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "AU"],
+      "year_signed": 1998,
+      "year_operational": 1999,
+      "status": "active",
+      "description": "MRA for mutual recognition of GMP inspections between EU and Australia. Entered into force 1 January 1999; amended 2013. Extends to Norway, Iceland, and Liechtenstein. Excludes advanced therapy medicinal products.",
+      "source_url": "https://www.tga.gov.au/products/medicines/manufacturing/manufacture-medicine/good-manufacturing-practice-gmp/international-agreements-and-arrangements-gmp-clearance"
+    },
+    {
+      "id": "eu-ca-gmp-ceta",
+      "name": "EU-Canada CETA Protocol on GMP",
+      "category": "mra",
+      "subcategory": "gmp_inspection",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "CA"],
+      "year_signed": 2017,
+      "year_operational": 2017,
+      "status": "active",
+      "description": "CETA Protocol on mutual recognition of GMP compliance, replacing the 1998 Canada-EU MRA Annex. Provisionally in force since 21 September 2017. Covers human pharmaceuticals, biologicals, and veterinary pharmaceuticals.",
+      "source_url": "https://www.canada.ca/en/health-canada/services/drugs-health-products/compliance-enforcement/international/mutual-recognition-agreements/updates/mutual-recognition-agreement-canada-european-community.html"
+    },
+    {
+      "id": "eu-nz-gmp-mra",
+      "name": "EU-New Zealand Mutual Recognition Agreement on GMP",
+      "category": "mra",
+      "subcategory": "gmp_inspection",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "NZ"],
+      "year_signed": 1998,
+      "year_operational": 1999,
+      "status": "active",
+      "description": "MRA covering mutual recognition of GMP inspections between EU and New Zealand. Signed 1998, operational from 1999. Includes pharmaceutical GMP among several covered sectors.",
+      "source_url": "https://www.ema.europa.eu/en/partners-networks/international-activities/bilateral-interactions-non-eu-regulators/new-zealand"
+    },
+    {
+      "id": "eu-ch-gmp-mra",
+      "name": "EU-Switzerland Mutual Recognition Agreement on GMP",
+      "category": "mra",
+      "subcategory": "gmp_inspection",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "CH"],
+      "year_signed": 1999,
+      "year_operational": 2002,
+      "status": "active",
+      "description": "MRA signed 21 June 1999, entered into force 1 June 2002. Chapter 15 of Annex 1 covers GMP inspection and batch certification for medicinal products including APIs. Confidentiality arrangements in place since 2015 between EC, EMA, and Swissmedic.",
+      "source_url": "https://www.swissmedic.ch/swissmedic/en/home/about-us/international-collaboration/bilateral-collaboration-with-partner-authorities/mutual-recognition-agreements.html"
+    },
+    {
+      "id": "eu-jp-gmp-mra",
+      "name": "EU-Japan Mutual Recognition Agreement on GMP",
+      "category": "mra",
+      "subcategory": "gmp_inspection",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "JP"],
+      "year_signed": 2001,
+      "year_operational": 2004,
+      "status": "active",
+      "description": "Japan's first MRA with the EU. Signed April 2001, entered into force 1 January 2002; GMP sectoral annex operational 29 May 2004. Scope expanded in 2018 to include sterile medicines, certain biologicals, vaccines, and APIs.",
+      "source_url": "https://www.mofa.go.jp/region/europe/eu/agreement.html"
+    },
+    {
+      "id": "eu-il-acaa-gmp",
+      "name": "EU-Israel ACAA on GMP (Agreement on Conformity Assessment)",
+      "category": "mra",
+      "subcategory": "gmp_inspection",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "IL"],
+      "year_signed": 2010,
+      "year_operational": 2013,
+      "status": "active",
+      "description": "Agreement on Conformity Assessment and Acceptance of Industrial Products (ACAA) with GMP annex. Entered into force 19 January 2013. Recognises Israeli industrial standards as equivalent to European standards for pharmaceutical GMP.",
+      "source_url": "https://www.gmp-compliance.org/gmp-news/acaa-with-israel-what-the-qp-needs-to-know"
+    },
+    {
+      "id": "us-ch-gmp-mra",
+      "name": "US-Switzerland Mutual Recognition Agreement on GMP",
+      "category": "mra",
+      "subcategory": "gmp_inspection",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "CH"],
+      "year_signed": 2023,
+      "year_operational": 2023,
+      "status": "active",
+      "description": "MRA between FDA and Swissmedic for mutual recognition of GMP inspections. Signed January 2023, entered into force 27 July 2023. Excludes ATMPs, human blood/plasma/tissues, and veterinary immunologicals.",
+      "source_url": "https://www.fda.gov/international-programs/international-arrangements/switzerland-mutual-recognition-agreement"
+    },
+    {
+      "id": "eu-mrp",
+      "name": "EU Internal Mutual Recognition Procedure (MRP)",
+      "category": "recognition",
+      "subcategory": "marketing_authorization",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT","LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE"],
+      "year_signed": 1995,
+      "year_operational": 1995,
+      "status": "active",
+      "description": "EU internal procedure allowing a marketing authorisation granted in one Member State to be recognised by other Member States. Legal basis in Directive 93/39/EEC (1993); procedure available from 1995, mandatory from 1 January 1998. Coordinated by CMD(h). Distinct from GMP MRAs; covers marketing authorizations for medicines not requiring centralised procedure.",
+      "source_url": "https://health.ec.europa.eu/medicinal-products/legal-framework-governing-medicinal-products-human-use-eu/authorisation-procedures-national-authorisation-procedures_en"
+    },
+    {
+      "id": "uk-irp-au",
+      "name": "UK International Recognition Procedure (IRP) — Australia reference",
+      "category": "reliance",
+      "subcategory": "marketing_authorization",
+      "type": "bilateral",
+      "directionality": "unilateral",
+      "from": "GB",
+      "to": ["AU"],
+      "year_signed": 2024,
+      "year_operational": 2024,
+      "status": "active",
+      "description": "MHRA International Recognition Procedure referencing TGA decisions. Route A (60 days, approval within 2 years) and Route B (110 days, approval within 10 years). Went live 1 January 2024.",
+      "source_url": "https://www.gov.uk/government/publications/international-recognition-procedure/international-recognition-procedure"
+    },
+    {
+      "id": "uk-irp-ca",
+      "name": "UK International Recognition Procedure (IRP) — Canada reference",
+      "category": "reliance",
+      "subcategory": "marketing_authorization",
+      "type": "bilateral",
+      "directionality": "unilateral",
+      "from": "GB",
+      "to": ["CA"],
+      "year_signed": 2024,
+      "year_operational": 2024,
+      "status": "active",
+      "description": "MHRA International Recognition Procedure referencing Health Canada decisions. Route A (60 days) and Route B (110 days).",
+      "source_url": "https://www.gov.uk/government/publications/international-recognition-procedure/international-recognition-procedure"
+    },
+    {
+      "id": "uk-irp-eu",
+      "name": "UK International Recognition Procedure (IRP) — EU reference",
+      "category": "reliance",
+      "subcategory": "marketing_authorization",
+      "type": "bilateral",
+      "directionality": "unilateral",
+      "from": "GB",
+      "to": ["EU"],
+      "year_signed": 2024,
+      "year_operational": 2024,
+      "status": "active",
+      "description": "MHRA International Recognition Procedure referencing EMA and EU member state competent authority decisions. Route A (60 days) and Route B (110 days).",
+      "source_url": "https://www.gov.uk/government/publications/international-recognition-procedure/international-recognition-procedure"
+    },
+    {
+      "id": "uk-irp-jp",
+      "name": "UK International Recognition Procedure (IRP) — Japan reference",
+      "category": "reliance",
+      "subcategory": "marketing_authorization",
+      "type": "bilateral",
+      "directionality": "unilateral",
+      "from": "GB",
+      "to": ["JP"],
+      "year_signed": 2024,
+      "year_operational": 2024,
+      "status": "active",
+      "description": "MHRA International Recognition Procedure referencing PMDA/MHLW decisions. Route A (60 days) and Route B (110 days).",
+      "source_url": "https://www.gov.uk/government/publications/international-recognition-procedure/international-recognition-procedure"
+    },
+    {
+      "id": "uk-irp-sg",
+      "name": "UK International Recognition Procedure (IRP) — Singapore reference",
+      "category": "reliance",
+      "subcategory": "marketing_authorization",
+      "type": "bilateral",
+      "directionality": "unilateral",
+      "from": "GB",
+      "to": ["SG"],
+      "year_signed": 2024,
+      "year_operational": 2024,
+      "status": "active",
+      "description": "MHRA International Recognition Procedure referencing HSA Singapore decisions. Route A (60 days) and Route B (110 days).",
+      "source_url": "https://www.gov.uk/government/publications/international-recognition-procedure/international-recognition-procedure"
+    },
+    {
+      "id": "uk-irp-ch",
+      "name": "UK International Recognition Procedure (IRP) — Switzerland reference",
+      "category": "reliance",
+      "subcategory": "marketing_authorization",
+      "type": "bilateral",
+      "directionality": "unilateral",
+      "from": "GB",
+      "to": ["CH"],
+      "year_signed": 2024,
+      "year_operational": 2024,
+      "status": "active",
+      "description": "MHRA International Recognition Procedure referencing Swissmedic decisions. Route A (60 days) and Route B (110 days).",
+      "source_url": "https://www.gov.uk/government/publications/international-recognition-procedure/international-recognition-procedure"
+    },
+    {
+      "id": "uk-irp-us",
+      "name": "UK International Recognition Procedure (IRP) — US reference",
+      "category": "reliance",
+      "subcategory": "marketing_authorization",
+      "type": "bilateral",
+      "directionality": "unilateral",
+      "from": "GB",
+      "to": ["US"],
+      "year_signed": 2024,
+      "year_operational": 2024,
+      "status": "active",
+      "description": "MHRA International Recognition Procedure referencing FDA decisions. Route A (60 days) and Route B (110 days).",
+      "source_url": "https://www.gov.uk/government/publications/international-recognition-procedure/international-recognition-procedure"
+    },
+    {
+      "id": "sg-hsa-verification",
+      "name": "Singapore HSA Verification Evaluation Route",
+      "category": "reliance",
+      "subcategory": "marketing_authorization",
+      "type": "bilateral",
+      "directionality": "unilateral",
+      "from": "SG",
+      "to": ["US", "EU", "CA", "GB", "CH", "AU"],
+      "year_signed": 2003,
+      "year_operational": 2003,
+      "status": "active",
+      "description": "HSA verification route for products already evaluated and approved by reference agencies. Originally established with four agencies (FDA, EMA, Health Canada, TGA); MHRA added as separate reference post-Brexit; Swissmedic added July 2024. Reduced timelines of 60-120 working days.",
+      "source_url": "https://www.hsa.gov.sg/therapeutic-products/register/overview/evaluation-routes"
+    },
+    {
+      "id": "au-tga-cor",
+      "name": "Australia TGA Comparable Overseas Regulator (COR) Pathway",
+      "category": "reliance",
+      "subcategory": "marketing_authorization",
+      "type": "bilateral",
+      "directionality": "unilateral",
+      "from": "AU",
+      "to": ["US", "EU", "CA", "JP", "SG", "CH", "GB"],
+      "year_signed": 2018,
+      "year_operational": 2018,
+      "status": "active",
+      "description": "TGA report-based evaluation process using assessment reports from comparable overseas regulators. COR-A pathway: 120 working days (within 12 months of COR approval). COR-B: 175 working days. Implemented January 2018.",
+      "source_url": "https://www.tga.gov.au/how-we-regulate/supply-therapeutic-good/supply-prescription-medicine/application-process-prescription-medicines/comparable-overseas-regulators"
+    },
+    {
+      "id": "ch-art13-tpa",
+      "name": "Swissmedic Article 13 TPA Reliance Procedure",
+      "category": "reliance",
+      "subcategory": "marketing_authorization",
+      "type": "bilateral",
+      "directionality": "unilateral",
+      "from": "CH",
+      "to": ["US", "EU", "CA", "JP", "AU", "GB"],
+      "year_signed": 2002,
+      "year_operational": 2002,
+      "status": "active",
+      "description": "Swissmedic procedure allowing reliance on assessments by foreign regulatory authorities with comparable control systems. Fee reduction of 60% when applicable. Foreign authorization documents must be no older than five years.",
+      "source_url": "https://www.swissmedic.ch/swissmedic/en/home/services/documents/faq-art-13.html"
+    },
+    {
+      "id": "za-sahpra-abridged",
+      "name": "SAHPRA Abridged Review Reliance Pathway",
+      "category": "reliance",
+      "subcategory": "marketing_authorization",
+      "type": "bilateral",
+      "directionality": "unilateral",
+      "from": "ZA",
+      "to": ["US", "EU", "CA", "JP", "AU", "CH", "GB"],
+      "year_signed": 2019,
+      "year_operational": 2019,
+      "status": "active",
+      "description": "SAHPRA abridged review process initiated July 2019 using reference agency assessment reports. Reduces CMC review time by >50% compared to full review (91 vs 179 days). Also accepts WHO prequalified products and ZaZiBoNa reviews.",
+      "source_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7458939/"
+    },
+    {
+      "id": "who-crp",
+      "name": "WHO Collaborative Registration Procedure (CRP)",
+      "category": "reliance",
+      "subcategory": "marketing_authorization",
+      "type": "bilateral",
+      "directionality": "unilateral",
+      "from": "WHO",
+      "to": ["BD", "BT", "BW", "BF", "BI", "CM", "CD", "CI", "ET", "GA", "GM", "GE", "GH", "KE", "TZ"],
+      "flowReversed": true,
+      "year_signed": 2013,
+      "year_operational": 2013,
+      "status": "active",
+      "description": "WHO mechanism allowing national regulatory authorities to access product assessment reports from stringent regulatory authorities or WHO Prequalification for verification-based review. Launched 2013 (WHO TRS No. 981, Annex 4). Target: regulatory decision within 90 working days. Voluntary participation. Country list is representative; 30+ countries participate.",
+      "source_url": "https://www.who.int/teams/regulation-prequalification/regulation-and-safety/facilitated-product-introduction/collaborative-registration-procedure"
+    },
+    {
+      "id": "ich",
+      "name": "International Council for Harmonisation of Technical Requirements for Pharmaceuticals for Human Use (ICH)",
+      "category": "harmonization",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["US", "EU", "JP", "CA", "CH", "SG", "KR", "CN", "BR", "GB", "AR", "MX", "TW", "SA", "TR", "ZA", "NG", "JO", "EG"],
+      "year_signed": 1990,
+      "year_operational": 1990,
+      "status": "active",
+      "description": "Harmonises technical requirements for pharmaceutical product registration. Founded 1990 by EU, Japan, and US regulators and industry. Reformed 2015 as ICH Association. Now includes 20+ regulatory members and 36 observers. Standing regulatory members include Swissmedic, Health Canada, ANVISA, MFDS, NMPA, MHRA, EDA (Egypt), and others.",
+      "source_url": "https://www.ich.org/page/members-observers"
+    },
+    {
+      "id": "pics",
+      "name": "Pharmaceutical Inspection Co-operation Scheme (PIC/S)",
+      "category": "harmonization",
+      "subcategory": "gmp_inspection",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["AR","AU","AT","BE","BR","BG","CA","TW","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HK","HU","IS","ID","IR","IE","IL","IT","JP","JO","KR","LV","LI","LT","MY","MT","MX","NL","NZ","NO","PL","PT","RO","SA","SG","SK","SI","ZA","ES","SE","CH","TH","TR","UA","GB","US"],
+      "year_signed": 1995,
+      "year_operational": 1995,
+      "status": "active",
+      "description": "International cooperative arrangement between 56 participating authorities for harmonisation and development of GMP standards and guidance documents. Promotes uniform inspection practices. Originally the Pharmaceutical Inspection Convention (PIC, 1970); PIC/S Scheme established 1995.",
+      "source_url": "https://picscheme.org/en/members"
+    },
+    {
+      "id": "vich",
+      "name": "International Cooperation on Harmonisation of Technical Requirements for Registration of Veterinary Medicinal Products (VICH)",
+      "category": "harmonization",
+      "subcategory": "veterinary",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "JP", "US"],
+      "year_signed": 1996,
+      "year_operational": 1996,
+      "status": "active",
+      "description": "Trilateral programme harmonising technical requirements for veterinary product registration. Founded by EU, Japan, and US regulators and industry. Standing members: Australia/New Zealand, Canada, South Africa, and UK. VICH Forum (est. 2011) includes 27+ additional countries via WOAH.",
+      "source_url": "https://vichsec.org/about/vich-structure/"
+    },
+    {
+      "id": "apec-rhsc",
+      "name": "APEC Regulatory Harmonization Steering Committee (RHSC)",
+      "category": "harmonization",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["AU","BN","CA","CL","CN","HK","ID","JP","KR","MY","MX","NZ","PG","PE","PH","RU","SG","TW","TH","US","VN"],
+      "year_signed": 2009,
+      "year_operational": 2009,
+      "status": "active",
+      "description": "Formed June 2009 under APEC LSIF to promote strategic regulatory harmonisation across 21 APEC member economies. Network of regulatory experts from APEC agencies, industry, and academia. Aims for regulatory convergence for medical products.",
+      "source_url": "https://www.apec.org/RHSC/About-us"
+    },
+    {
+      "id": "eac-mrh",
+      "name": "East African Community Medicines Regulatory Harmonisation (EAC-MRH)",
+      "category": "harmonization",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["BI", "CD", "KE", "RW", "SO", "SS", "UG", "TZ"],
+      "year_signed": 2012,
+      "year_operational": 2012,
+      "status": "active",
+      "description": "Regional initiative launched 2012 to harmonise medicines regulation across EAC Partner States. Developed common CTD based on ICH, common information management system, and joint assessment process. Reduced national assessment timelines from 24 months to 8-14 months.",
+      "source_url": "https://www.eac.int/mrh"
+    },
+    {
+      "id": "sadc-harmonization",
+      "name": "SADC Pharmaceutical Harmonisation Initiative",
+      "category": "harmonization",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["AO","BW","KM","CD","SZ","LS","MG","MW","MU","MZ","NA","SC","ZA","TZ","ZM","ZW"],
+      "year_signed": 2011,
+      "year_operational": 2011,
+      "status": "active",
+      "description": "SADC regional pharmaceutical harmonisation covering 16 member states. Implemented through ZaZiBoNa collaborative procedure and broader regulatory alignment under AMRH framework. Aims to standardise approaches to medicines, vaccines, and medical device regulation.",
+      "source_url": "https://www.sadc.int/pillars/pharmaceuticals"
+    },
+    {
+      "id": "access-consortium",
+      "name": "ACCESS Consortium",
+      "category": "work_sharing",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["AU", "CA", "SG", "CH", "GB"],
+      "year_signed": 2007,
+      "year_operational": 2007,
+      "status": "active",
+      "description": "Coalition of medium-sized regulatory authorities (TGA, Health Canada, HSA, Swissmedic, MHRA). Founded 2007 as Australia-Canada-Singapore consortium with Swissmedic as founding member; UK (MHRA) joined October 2020. Operates NASWSI (new active substance work-sharing, launched 2018) and GMWSI (generic medicines work-sharing).",
+      "source_url": "https://www.canada.ca/en/health-canada/services/drugs-health-products/international-activities/access-consortium/new-chemical-entities-work-sharing-initiative-overview.html"
+    },
+    {
+      "id": "project-orbis",
+      "name": "FDA Project Orbis",
+      "category": "work_sharing",
+      "subcategory": "oncology",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["US", "AU", "BR", "CA", "IL", "SG", "CH", "GB"],
+      "year_signed": 2019,
+      "year_operational": 2019,
+      "status": "active",
+      "description": "FDA Oncology Center of Excellence initiative for concurrent submission and review of oncology products across multiple jurisdictions. Launched May 2019 with AU, CA. SG and CH joined early 2020; BR May 2020; GB Jan 2021; IL Jul 2021. Japan and EMA have observer status.",
+      "source_url": "https://www.fda.gov/about-fda/oncology-center-excellence/project-orbis"
+    },
+    {
+      "id": "ema-fda-psa",
+      "name": "EMA-FDA Parallel Scientific Advice",
+      "category": "work_sharing",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "US"],
+      "year_signed": 2005,
+      "year_operational": 2005,
+      "status": "active",
+      "description": "Voluntary programme allowing sponsors to receive concurrent scientific advice from EMA and FDA on drug development. Launched 2005. Trilateral meetings (sponsor, EMA, FDA) at ~65 days after validation. Covers drugs, biologicals, vaccines, and advanced therapies.",
+      "source_url": "https://www.ema.europa.eu/en/human-regulatory-overview/research-development/scientific-advice-protocol-assistance/parallel-scientific-advice-special-development-aspects-or-product-types"
+    },
+    {
+      "id": "zazibona",
+      "name": "ZaZiBoNa Collaborative Medicines Registration",
+      "category": "work_sharing",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["ZM", "ZW", "BW", "NA", "TZ", "CD", "MW", "MZ", "ZA"],
+      "year_signed": 2013,
+      "year_operational": 2013,
+      "status": "active",
+      "description": "SADC collaborative medicines registration initiative for joint dossier assessments and GMP inspections. Founded October 2013 by Zambia, Zimbabwe, Botswana, and Namibia. Name means 'look to the future' in Nyanja. Now includes 9 active SADC member NRAs; all 16 SADC countries participate at some level.",
+      "source_url": "https://zazibona.com/"
+    },
+    {
+      "id": "ema-fda-clusters",
+      "name": "EMA-FDA Regulatory Clusters",
+      "category": "work_sharing",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "US"],
+      "year_signed": 2004,
+      "year_operational": 2004,
+      "status": "active",
+      "description": "Approximately 30 topic-specific clusters allowing EMA and FDA experts to exchange perspectives on regulatory science. Started 2004. Cover biosimilars, oncology, orphan drugs, paediatrics, pharmacovigilance, and other topics. Health Canada participates in some clusters.",
+      "source_url": "https://www.ema.europa.eu/en/partners-networks/international-activities/cluster-activities"
+    },
+    {
+      "id": "eu-us-confidentiality",
+      "name": "EU-US Confidentiality Arrangement on Pharmaceutical Information",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "US"],
+      "year_signed": 2003,
+      "year_operational": 2003,
+      "status": "active",
+      "description": "Confidentiality arrangement between EMA/EC and FDA signed September 2003, extended indefinitely. Permits exchange of non-public information covering scientific advice, orphan designation, paediatric development, GMP/GCP inspections, marketing authorisation, and pharmacovigilance.",
+      "source_url": "https://www.ema.europa.eu/en/partners-networks/international-activities/bilateral-interactions-non-eu-regulators/united-states"
+    },
+    {
+      "id": "fda-cc-au",
+      "name": "FDA Confidentiality Commitment — Australia",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "AU"],
+      "year_signed": 2004,
+      "year_operational": 2004,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and TGA establishing legal framework for sharing non-public regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-br",
+      "name": "FDA Confidentiality Commitment — Brazil",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "BR"],
+      "year_signed": 2010,
+      "year_operational": 2010,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and ANVISA for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-ca",
+      "name": "FDA Confidentiality Commitment — Canada",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "CA"],
+      "year_signed": 2003,
+      "year_operational": 2003,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and Health Canada for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-jp",
+      "name": "FDA Confidentiality Commitment — Japan",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "JP"],
+      "year_signed": 2004,
+      "year_operational": 2004,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and MHLW/PMDA for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-ch",
+      "name": "FDA Confidentiality Commitment — Switzerland",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "CH"],
+      "year_signed": 2003,
+      "year_operational": 2003,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and Swissmedic for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-gb",
+      "name": "FDA Confidentiality Commitment — United Kingdom",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "GB"],
+      "year_signed": 2005,
+      "year_operational": 2005,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and MHRA for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-sg",
+      "name": "FDA Confidentiality Commitment — Singapore",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "SG"],
+      "year_signed": 2004,
+      "year_operational": 2004,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and HSA for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-il",
+      "name": "FDA Confidentiality Commitment — Israel",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "IL"],
+      "year_signed": 2024,
+      "year_operational": 2024,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and Israel Ministry of Health for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-mx",
+      "name": "FDA Confidentiality Commitment — Mexico",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "MX"],
+      "year_signed": 2002,
+      "year_operational": 2002,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and COFEPRIS for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-nz",
+      "name": "FDA Confidentiality Commitment — New Zealand",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "NZ"],
+      "year_signed": 2007,
+      "year_operational": 2007,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and Medsafe for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-za",
+      "name": "FDA Confidentiality Commitment — South Africa",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "ZA"],
+      "year_signed": 2004,
+      "year_operational": 2004,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and SAHPRA for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-sa",
+      "name": "FDA Confidentiality Commitment — Saudi Arabia",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "SA"],
+      "year_signed": 2015,
+      "year_operational": 2015,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and SFDA for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-who-confidentiality",
+      "name": "FDA-WHO Mutual Confidentiality Arrangement",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "WHO"],
+      "year_signed": 2013,
+      "year_operational": 2013,
+      "status": "active",
+      "description": "Mutual confidentiality arrangement between FDA and WHO for exchanging non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/confidentiality-commitments/mutual-confidentiality-arrangement-between-fda-and-world-health-organization"
+    },
+    {
+      "id": "icmra",
+      "name": "International Coalition of Medicines Regulatory Authorities (ICMRA)",
+      "category": "coordination",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["AU","BR","CA","CN","FR","DE","IN","IE","IT","JP","KR","MX","NL","NZ","NG","SA","SG","ZA","SE","CH","GB","US","EU"],
+      "year_signed": 2013,
+      "year_operational": 2013,
+      "status": "active",
+      "description": "Global forum formally established 2013, bringing together heads of 25+ medicines regulatory authorities. WHO serves as observer. Provides strategic coordination on regulatory challenges including crisis preparedness. Russia's Roszdravnadzor suspended May 2023.",
+      "source_url": "https://www.icmra.info/drupal/en/aboutus"
+    },
+    {
+      "id": "iprp",
+      "name": "International Pharmaceutical Regulators Programme (IPRP)",
+      "category": "coordination",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["US","EU","JP","CA","AU","CH","SG","GB","KR","BR","CN","NZ","ZA","MX","TW","SA"],
+      "year_signed": 2018,
+      "year_operational": 2018,
+      "status": "active",
+      "description": "Launched 1 January 2018 from consolidation of IPRF and IGDRP. Network of 26+ regulatory authorities promoting convergence and work-sharing on pharmaceutical regulatory science. First meeting June 2018 in Kobe, Japan.",
+      "source_url": "https://www.iprp.global/members"
+    },
+    {
+      "id": "amrh",
+      "name": "African Medicines Regulatory Harmonisation (AMRH) Initiative",
+      "category": "coordination",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["ZA","KE","TZ","NG","GH","ET","UG","RW","BI","CD","ZM","ZW","BW","NA","MW","MZ","SN","CM"],
+      "year_signed": 2009,
+      "year_operational": 2009,
+      "status": "active",
+      "description": "Pan-African programme launched 2009 by AUDA-NEPAD consortium to harmonise medicines regulation across 55 African NRAs. Implemented in 5 RECs: EAC, SADC, ECOWAS, IGAD, and ECCAS. Supported by WHO, Bill & Melinda Gates Foundation, and FCDO.",
+      "source_url": "https://amrh.nepad.org/"
+    },
+    {
+      "id": "who-prequalification",
+      "name": "WHO Prequalification of Medicines Programme",
+      "category": "coordination",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["WHO"],
+      "year_signed": 2001,
+      "year_operational": 2001,
+      "status": "active",
+      "description": "Established 2001 in response to HIV/AIDS pandemic. Assesses quality, safety, and efficacy of medicines, vaccines, and diagnostics for use by UN agencies and global procurement. Products approved are listed on the WHO Prequalified Medicines List. Partnership with UNAIDS, UNICEF, and UNFPA.",
+      "source_url": "https://extranet.who.int/prequal/medicines/overview-history-mission"
+    },
+    {
+      "id": "fda-cc-ar",
+      "name": "FDA Confidentiality Commitment — Argentina",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "AR"],
+      "year_signed": 2014,
+      "year_operational": 2014,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and ANMAT Argentina for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-cl",
+      "name": "FDA Confidentiality Commitment — Chile",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "CL"],
+      "year_signed": 2012,
+      "year_operational": 2012,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and ISP Chile for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-ec",
+      "name": "FDA Confidentiality Commitment — Ecuador",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "EC"],
+      "year_signed": 2022,
+      "year_operational": 2022,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and Ecuador's regulatory authority for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-id",
+      "name": "FDA Confidentiality Commitment — Indonesia",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "ID"],
+      "year_signed": 2023,
+      "year_operational": 2023,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and Badan POM Indonesia for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-ke",
+      "name": "FDA Confidentiality Commitment — Kenya",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "KE"],
+      "year_signed": 2024,
+      "year_operational": 2024,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and Pharmacy and Poisons Board of Kenya for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "fda-cc-ua",
+      "name": "FDA Confidentiality Commitment — Ukraine",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "UA"],
+      "year_signed": 2024,
+      "year_operational": 2024,
+      "status": "active",
+      "description": "Confidentiality commitment between FDA and Ukraine's State Service on Medicines and Drugs Control for sharing non-public pharmaceutical regulatory information.",
+      "source_url": "https://www.fda.gov/international-programs/cooperative-arrangements/confidentiality-commitments"
+    },
+    {
+      "id": "ema-au-confidentiality",
+      "name": "EMA-TGA Confidentiality Arrangement (Australia)",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "AU"],
+      "year_signed": 2012,
+      "year_operational": 2012,
+      "status": "active",
+      "description": "Confidentiality arrangement between EMA/EC and Australia's TGA signed 2012, allowing exchange of confidential information as part of regulatory and scientific processes.",
+      "source_url": "https://www.ema.europa.eu/en/partners-networks/international-activities/bilateral-interactions-non-eu-regulators/australia"
+    },
+    {
+      "id": "ema-ca-confidentiality",
+      "name": "EMA-Health Canada Confidentiality Arrangement",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "CA"],
+      "year_signed": 2007,
+      "year_operational": 2007,
+      "status": "active",
+      "description": "Confidentiality arrangement between EMA/EC and Health Canada allowing exchange of confidential regulatory and scientific information on medicinal products.",
+      "source_url": "https://health.ec.europa.eu/medicinal-products/good-manufacturing-and-distribution-practices/bilateral-relations-pharmaceutical-cooperation_en"
+    },
+    {
+      "id": "ema-jp-confidentiality",
+      "name": "EMA-PMDA Confidentiality Arrangement (Japan)",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "JP"],
+      "year_signed": 2007,
+      "year_operational": 2007,
+      "status": "active",
+      "description": "Confidentiality arrangement between EMA/EC and Japan's MHLW/PMDA enabling exchange of confidential regulatory information as part of scientific and regulatory processes.",
+      "source_url": "https://www.ema.europa.eu/en/partners-networks/international-activities/bilateral-interactions-non-eu-regulators/japan"
+    },
+    {
+      "id": "ema-ch-confidentiality",
+      "name": "EMA-Swissmedic Confidentiality Arrangement (Switzerland)",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "CH"],
+      "year_signed": 2015,
+      "year_operational": 2015,
+      "status": "active",
+      "description": "Confidentiality arrangement between EC, EMA, and Swissmedic signed 2015 allowing exchange of confidential information as part of regulatory and scientific processes.",
+      "source_url": "https://www.ema.europa.eu/en/partners-networks/international-activities/bilateral-interactions-non-eu-regulators/switzerland"
+    },
+    {
+      "id": "ema-nz-confidentiality",
+      "name": "EMA-Medsafe Confidentiality Arrangement (New Zealand)",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "NZ"],
+      "year_signed": 2015,
+      "year_operational": 2015,
+      "status": "active",
+      "description": "Confidentiality arrangement between EMA/EC and New Zealand's Medsafe allowing exchange of confidential regulatory and scientific information.",
+      "source_url": "https://www.ema.europa.eu/en/partners-networks/international-activities/bilateral-interactions-non-eu-regulators/new-zealand"
+    },
+    {
+      "id": "eu-ca-gmp-mra-1998",
+      "name": "EU-Canada Mutual Recognition Agreement on GMP (1998, Superseded)",
+      "category": "mra",
+      "subcategory": "gmp_inspection",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "CA"],
+      "year_signed": 1998,
+      "year_operational": 2003,
+      "status": "expired",
+      "description": "Agreement on Mutual Recognition between Canada and the European Community, signed 14 May 1998 in London. Pharmaceutical GMP annex became operational in 2003. Superseded on 21 September 2017 when the CETA Protocol on mutual recognition of GMP compliance entered into provisional application, replacing this MRA annex.",
+      "source_url": "https://www.canada.ca/en/health-canada/services/drugs-health-products/compliance-enforcement/international/mutual-recognition-agreements/updates/mutual-recognition-agreement-canada-european-community.html"
+    },
+    {
+      "id": "uk-eu-regulatory-alignment",
+      "name": "UK Participation in EU/EMA Pharmaceutical Regulatory System (Pre-Brexit)",
+      "category": "recognition",
+      "subcategory": "marketing_authorization",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["GB", "EU"],
+      "year_signed": 1995,
+      "year_operational": 1995,
+      "status": "expired",
+      "description": "As an EU Member State, the UK was fully integrated into the EU pharmaceutical regulatory system including EMA centralised procedure, mutual recognition procedure, decentralised procedure, and GMP framework. EU pharmaceutical law ceased to apply to the UK on 31 December 2020 (end of Brexit transition period). From 1 January 2021, MHRA became the sole UK medicines regulator. Replaced by the limited EU-UK TCA Annex TBT-2 on medicinal products, which covers GMP inspection recognition but not batch certification or marketing authorisation.",
+      "source_url": "https://www.ema.europa.eu/en/about-us/history-ema/brexit-united-kingdoms-withdrawal-european-union"
+    },
+    {
+      "id": "ttip-pharma",
+      "name": "TTIP Pharmaceutical Regulatory Cooperation (EU-US, Failed Negotiation)",
+      "category": "mra",
+      "subcategory": "regulatory_cooperation",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "US"],
+      "year_signed": 2013,
+      "year_operational": null,
+      "status": "negotiation",
+      "description": "Proposed pharmaceutical regulatory cooperation annex within the Transatlantic Trade and Investment Partnership (TTIP). Negotiations launched June 2013; EU tabled textual proposal in April 2016. Talks stalled in late 2016 and were not resumed after January 2017. Council of the European Union declared the TTIP negotiating directives 'obsolete and no longer relevant' on 15 April 2019. The GMP inspection component was achieved separately through the 2017 US-EU MRA Amended Pharmaceutical Annex, but broader regulatory cooperation provisions never entered into force.",
+      "source_url": "https://www.europarl.europa.eu/legislative-train/theme-reasonable-and-balanced-trade-agreement-with-the-united-states/file-ttip-pharmaceuticals-1"
+    },
+    {
+      "id": "us-gb-gmp-mra",
+      "name": "US-UK Mutual Recognition Agreement on GMP Inspections",
+      "category": "mra",
+      "subcategory": "gmp_inspection",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["US", "GB"],
+      "year_signed": 2021,
+      "year_operational": 2021,
+      "status": "active",
+      "description": "MRA between FDA and MHRA for mutual recognition of pharmaceutical GMP inspections. Entered into force 1 January 2021 under post-Brexit arrangements. Initially human medicines only; expanded to veterinary medicines September 2021. FDA lists the UK as one of three MRA partners alongside EU and Switzerland.",
+      "source_url": "https://www.fda.gov/international-programs/international-arrangements/mutual-recognition-agreements-mra"
+    },
+    {
+      "id": "eu-gb-tca-gmp",
+      "name": "EU-UK TCA Annex TBT-2 on GMP (Medicinal Products)",
+      "category": "mra",
+      "subcategory": "gmp_inspection",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "GB"],
+      "year_signed": 2021,
+      "year_operational": 2021,
+      "status": "active",
+      "description": "Mutual recognition of GMP inspections between EU and UK under the Trade and Cooperation Agreement. TCA signed 30 December 2020; provisionally applied 1 January 2021; formally entered force 1 May 2021. Covers all marketed medicinal products, APIs, ATMPs, and IMPs. Does NOT cover batch certification or marketing authorisation (unlike the pre-Brexit arrangement). Successor to the expired UK-EU regulatory alignment entry.",
+      "source_url": "https://natlawreview.com/article/pharmaceuticals-highlighted-eu-uk-trade-and-cooperation-agreement"
+    },
+    {
+      "id": "asean-ppwg-actd",
+      "name": "ASEAN Pharmaceutical Product Working Group (PPWG) / ACTD",
+      "category": "harmonization",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["BN", "KH", "ID", "LA", "MY", "MM", "PH", "SG", "TH", "VN"],
+      "year_signed": 1999,
+      "year_operational": 2002,
+      "status": "active",
+      "description": "Harmonization of pharmaceutical registration requirements across all 10 ASEAN member states. PPWG established 1999; ASEAN Common Technical Dossier (ACTD, based on ICH CTD) adopted progressively from 2002. Developed ASEAN Common Technical Requirements (ACTR) and joint assessment procedures for marketing authorization applications.",
+      "source_url": "https://asean.org/wp-content/uploads/2022/12/ASEAN-Pharmaceutical-Regulatory-Policy-Sample-Print-REV-20122022-.pdf"
+    },
+    {
+      "id": "gcc-centralized-registration",
+      "name": "Gulf Centralized Committee for Drug Registration (GCC-DR)",
+      "category": "harmonization",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["SA", "AE", "BH", "KW", "OM", "QA"],
+      "year_signed": 1999,
+      "year_operational": 1999,
+      "status": "active",
+      "description": "Centralized registration and marketing authorization of pharmaceutical products across all 6 GCC states through a single procedure under the Gulf Health Council. Also centralizes pharmaceutical company registration and GMP inspections. Harmonized eCTD format adopted. Functions similarly to the EU centralized procedure.",
+      "source_url": "https://www.ghc.sa/en/central-registration/"
+    },
+    {
+      "id": "ema-kr-confidentiality",
+      "name": "EMA-MFDS Confidentiality Arrangement (Republic of Korea)",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "KR"],
+      "year_signed": 2024,
+      "year_operational": 2024,
+      "status": "active",
+      "description": "Confidentiality arrangement between EMA/DG SANTE and Korea's MFDS allowing exchange of non-public information on medicinal products. Signed 25-26 April 2024. Covers safety, quality, efficacy of human medicines, inspection information, regulatory guidance, and legislation. Indefinite term. Builds on ad-hoc COVID-19 arrangement from 2021.",
+      "source_url": "https://www.ema.europa.eu/en/news/confidentiality-arrangement-between-eu-republic-korea"
+    },
+    {
+      "id": "ema-br-confidentiality",
+      "name": "EMA-ANVISA Confidentiality Arrangement (Brazil)",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "BR"],
+      "year_signed": 2021,
+      "year_operational": 2021,
+      "status": "active",
+      "description": "Confidentiality arrangement between EMA/DG SANTE and Brazil's ANVISA for exchange of non-public information on human and veterinary medicines. Effective 26 March 2021. Indefinite term.",
+      "source_url": "https://www.ema.europa.eu/en/news/confidentiality-arrangement-between-eu-brazilian-regulatory-authorities"
+    },
+    {
+      "id": "eaeu-common-market-medicines",
+      "name": "Eurasian Economic Union (EAEU) Common Market for Medicines",
+      "category": "harmonization",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["RU", "BY", "KZ", "AM", "KG"],
+      "year_signed": 2014,
+      "year_operational": 2016,
+      "status": "active",
+      "description": "Unified pharmaceutical registration system across 5 EAEU member states covering 184 million people. Regulatory framework adopted 2014; common market for medicines began operating 2016. Features decentralized and mutual recognition procedures modeled on the EU. A registration obtained in one member state can be recognized by others through mutual recognition and decentralized procedures. Standardized timeline of 210-300 days. Common GMP/GCP/GLP requirements.",
+      "source_url": "https://www.biomapas.com/drug-registration-in-the-eurasian-economic-union-eaeu/"
+    },
+    {
+      "id": "pandrh",
+      "name": "Pan American Network for Drug Regulatory Harmonization (PANDRH)",
+      "category": "coordination",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["US", "BR", "MX", "AR", "CO", "CL", "CU", "PE"],
+      "year_signed": 1999,
+      "year_operational": 1999,
+      "status": "active",
+      "description": "PAHO-led network established 1999 for coordination and harmonization of pharmaceutical regulation in the Americas. Produces harmonized guidelines, conducts diagnostic studies, and promotes regulatory convergence. Technical working groups cover GMP, bioequivalence, pharmacovigilance, counterfeits, biotherapeutics, and advanced therapies. Secretariat provided by PAHO/WHO. All 35 PAHO member states participate; representative subset shown.",
+      "source_url": "https://www.paho.org/en/pan-american-network-drug-regulatory-harmonization-pandrh"
+    },
+    {
+      "id": "ecowas-mrh",
+      "name": "West Africa Medicines Regulatory Harmonisation (ECOWAS-MRH)",
+      "category": "harmonization",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["BJ", "BF", "CV", "CI", "GM", "GH", "GN", "GW", "LR", "ML", "NE", "NG", "SN", "SL", "TG"],
+      "year_signed": 2017,
+      "year_operational": 2019,
+      "status": "active",
+      "description": "Harmonization of medicines registration across the original 15 ECOWAS member states at launch. Launched 2017 by the West African Health Organization (WAHO). Joint assessments of registration applications by 7+ NMRAs with outcomes used across all member states since 2019. Operates under the AMRH framework as one of its 5 Regional Economic Community initiatives. Note: Burkina Faso (BF), Mali (ML), and Niger (NE) announced withdrawal from ECOWAS in January 2024; their participation in the MRH initiative post-withdrawal is uncertain.",
+      "source_url": "https://www.wahooas.org/web-ooas/en/projets/wa-mrh-west-africa-medicines-regulatory-harmonization-project"
+    },
+    {
+      "id": "igad-mrh",
+      "name": "IGAD Medicines Regulatory Harmonisation (IGAD-MRH)",
+      "category": "harmonization",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["DJ", "ER", "ET", "KE", "SO", "SS", "SD", "UG"],
+      "year_signed": 2014,
+      "year_operational": 2015,
+      "status": "active",
+      "description": "Harmonization of medicines regulation across 8 IGAD member states. WHO partnership inception 2014; inaugural NMRA meeting 2015; Steering Committee established 2016. Formally established 2017 per IGAD; foundational work from 2014. Operates under the AMRH umbrella as one of its 5 Regional Economic Community initiatives. Working on harmonized QMS for NMRAs. Earlier stage of development than EAC-MRH or SADC.",
+      "source_url": "https://mrh.igad.int/News.html"
+    },
+    {
+      "id": "african-medicines-agency",
+      "name": "African Medicines Agency (AMA)",
+      "category": "coordination",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["ZA", "NG", "KE", "ET", "EG", "GH", "TZ", "SN", "RW", "MA"],
+      "year_signed": 2019,
+      "year_operational": 2021,
+      "status": "active",
+      "description": "Continental regulatory body to coordinate and strengthen medicines regulation across Africa. Treaty adopted by African Union 2019; entered into force 2021 with 15th ratification; 37 signatories and 27+ ratifications. Director General appointed 2025. Headquarters in Rwanda. Provides regulatory oversight, coordinates harmonization across RECs, and reduces circulation of substandard/falsified products. Representative subset of ratifying states shown.",
+      "source_url": "https://au.int/en/treaties/treaty-establishment-african-medicines-agency"
+    },
+    {
+      "id": "eccas-mrh",
+      "name": "ECCAS Medicines Regulatory Harmonisation (ECCAS-MRH)",
+      "category": "harmonization",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["AO", "BI", "CM", "CF", "TD", "CG", "CD", "GQ", "GA", "ST"],
+      "year_signed": 2013,
+      "year_operational": 2014,
+      "status": "active",
+      "description": "Harmonization of pharmaceutical regulation across 10 Central African states under the ECCAS Common Pharmaceutical Policy (adopted 2013) and coordinated at OCEAC from 2014. Operates under the AMRH framework as the 5th Regional Economic Community initiative. Earlier stage of development than EAC-MRH, SADC, or ECOWAS-MRH. All 10 ECCAS member states are covered, though only 7 (CM, CF, TD, CG, CD, GQ, GA) are listed as active participants on the AMRH NEPAD page.",
+      "source_url": "https://amrh.nepad.org/amrh-recs/eccas-mrh-rec-project"
+    },
+    {
+      "id": "crs-caricom",
+      "name": "Caribbean Regulatory System (CRS) / CARICOM",
+      "category": "reliance",
+      "type": "multilateral",
+      "directionality": "mutual",
+      "parties": ["AG", "BS", "BB", "BZ", "DM", "GD", "GY", "HT", "JM", "KN", "LC", "VC", "SR", "TT"],
+      "year_signed": 2014,
+      "year_operational": 2014,
+      "status": "active",
+      "description": "Centralized assessment of pharmaceutical products for CARICOM member states. Agreed by Ministers of Health in 2014. Located at CARPHA in Trinidad and Tobago. Uses reliance approach leveraging reference authority decisions with focus on essential medicines. Harmonized regulatory system for registration and surveillance across 14 member states.",
+      "source_url": "https://carpha.org/What-We-Do/CRS/Caribbean-Regulatory-System-1"
+    },
+    {
+      "id": "eu-cn-consultation",
+      "name": "EU-China Consultation and Cooperation Mechanism on Pharmaceuticals",
+      "category": "coordination",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "CN"],
+      "year_signed": 2010,
+      "year_operational": 2010,
+      "status": "active",
+      "description": "Annual regulatory dialogues at Director level between DG SANTE/EMA and NMPA. Covers regulatory convergence, GMP, clinical trials. Jointly established by the European Commission and China's SFDA in 2010. Not a formal confidentiality arrangement; operates as an informal coordination mechanism.",
+      "source_url": "https://health.ec.europa.eu/medicinal-products/international-cooperation-pharmaceuticals_en"
+    },
+    {
+      "id": "eu-in-cooperation",
+      "name": "EU-India Cooperation Agreement on Pharmaceuticals",
+      "category": "coordination",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "IN"],
+      "year_signed": 2005,
+      "year_operational": 2006,
+      "status": "active",
+      "description": "Annual regulatory dialogues at Director level between DG SANTE/EMA and CDSCO. Established under the 2005 EU-India Joint Action Plan; Joint Working Group on Pharmaceuticals, Biotechnology and Medical Devices operational from July 2006. Not a formal confidentiality arrangement; operates as an informal coordination mechanism similar to the EU-China mechanism.",
+      "source_url": "https://health.ec.europa.eu/medicinal-products/international-cooperation-pharmaceuticals_en"
+    },
+    {
+      "id": "ema-who-confidentiality",
+      "name": "EMA-WHO Working Arrangement (Confidentiality)",
+      "category": "enabling",
+      "subcategory": "confidentiality",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["EU", "WHO"],
+      "year_signed": 2015,
+      "year_operational": 2015,
+      "status": "active",
+      "description": "Working arrangement between EMA and WHO for exchange of confidential regulatory information as part of regulatory and scientific processes. Listed on EMA international agreements page. Complements the FDA-WHO mutual confidentiality arrangement already in the dataset.",
+      "source_url": "https://www.ema.europa.eu/en/partners-networks/international-activities/international-agreements"
+    },
+    {
+      "id": "gb-sg-innovation-corridor",
+      "name": "UK-Singapore Regulatory Innovation Corridor",
+      "category": "coordination",
+      "type": "bilateral",
+      "directionality": "mutual",
+      "parties": ["GB", "SG"],
+      "year_signed": 2025,
+      "year_operational": 2025,
+      "status": "active",
+      "description": "Joint regulatory pathway allowing developers to seek early informal joint advice from MHRA and HSA simultaneously. Covers breakthrough therapies in cancer, rare diseases, neurodegenerative disease, obesity, digital health. Includes joint work on AI in healthcare. Launched 2025.",
+      "source_url": "https://www.gov.uk/government/news/uk-and-singapore-launch-a-regulatory-innovation-corridor-to-speed-up-access-to-breakthrough-health-technologies"
+    }
+  ]
+};
+</script>
+
+<script>
+// ── Configuration ──────────────────────────────────────────────────
+
+const CATEGORY_COLORS = {
+  mra:           "#1B4F72",
+  reliance:      "#476EAE",
+  recognition:   "#2E86AB",
+  harmonization: "#48B3AF",
+  work_sharing:  "#73C6B6",
+  enabling:      "#A7E399",
+  coordination:  "#F6FF99"
+};
+
+// Category priority for fill conflicts (higher = wins)
+const CATEGORY_PRIORITY = {
+  work_sharing: 7, reliance: 6, mra: 5, recognition: 4,
+  harmonization: 3, coordination: 2, enabling: 1
+};
+
+const CATEGORY_LABELS = {
+  mra:           "Mutual Recognition",
+  reliance:      "Reliance",
+  recognition:   "Recognition",
+  harmonization: "Harmonization",
+  work_sharing:  "Work Sharing",
+  enabling:      "Enabling Framework",
+  coordination:  "Coordination"
+};
+
+const STATUS_DEFAULTS = {
+  active:      true,
+  expired:     false,
+  negotiation: false
+};
+
+// ISO-2 to ISO-3166-1 numeric mapping for EU fill
+const ISO2_TO_NUMERIC = {
+  AT:"040", BE:"056", BG:"100", HR:"191", CY:"196", CZ:"203",
+  DK:"208", EE:"233", FI:"246", FR:"250", DE:"276", GR:"300",
+  HU:"348", IE:"372", IT:"380", LV:"428", LT:"440", LU:"442",
+  MT:"470", NL:"528", PL:"616", PT:"620", RO:"642", SK:"703",
+  SI:"705", ES:"724", SE:"752"
+};
+
+// Country centroid lookup (ISO-2 → [lat, lon])
+const COUNTRY_CENTROIDS = {
+  US:[38.0,-97.0], CA:[56.1,-106.3], MX:[23.6,-102.5],
+  BR:[-14.2,-51.9], AR:[-38.4,-63.6], CL:[-35.7,-71.5], CO:[4.6,-74.1],
+  GB:[55.4,-3.4], FR:[46.2,2.2], DE:[51.2,10.4], IT:[41.9,12.6],
+  ES:[40.5,-3.7], PT:[39.4,-8.2], NL:[52.1,5.3], BE:[50.5,4.5],
+  CH:[46.8,8.2], AT:[47.5,14.6], SE:[60.1,18.6], NO:[60.5,8.5],
+  DK:[56.3,9.5], FI:[61.9,25.7], PL:[51.9,19.1], CZ:[49.8,15.5],
+  SK:[48.7,19.7], HU:[47.2,19.5], RO:[45.9,25.0], BG:[42.7,25.5],
+  GR:[39.1,21.8], HR:[45.1,15.2], SI:[46.2,14.9], EE:[58.6,25.0],
+  LV:[56.9,24.1], LT:[55.2,23.9], LU:[49.8,6.1], MT:[35.9,14.4],
+  CY:[35.1,33.4], IE:[53.1,-8.2],
+  JP:[36.2,138.3], CN:[35.9,104.2], KR:[35.9,128.0], IN:[20.6,79.0],
+  AU:[-25.3,133.8], NZ:[-40.9,174.9],
+  ZA:[-30.6,22.9], NG:[9.1,8.7], KE:[-0.02,37.9], EG:[26.8,30.8],
+  IL:[31.0,34.9], SA:[23.9,45.1], AE:[23.4,53.8], TR:[39.0,35.2],
+  RU:[61.5,105.3], SG:[1.4,103.8], TH:[15.9,100.9], MY:[4.2,101.9],
+  ID:[-0.8,113.9], PH:[12.9,121.8], VN:[14.1,108.3], TW:[23.7,121.0],
+  PK:[30.4,69.3], BD:[23.7,90.4],
+  WHO:[46.2,6.1]
+};
+
+// Full country name mapping
+const COUNTRY_NAMES = {
+  US:"United States", CA:"Canada", MX:"Mexico",
+  BR:"Brazil", AR:"Argentina", CL:"Chile", CO:"Colombia",
+  GB:"United Kingdom", FR:"France", DE:"Germany", IT:"Italy",
+  ES:"Spain", PT:"Portugal", NL:"Netherlands", BE:"Belgium",
+  CH:"Switzerland", AT:"Austria", SE:"Sweden", NO:"Norway",
+  DK:"Denmark", FI:"Finland", PL:"Poland", CZ:"Czechia",
+  SK:"Slovakia", HU:"Hungary", RO:"Romania", BG:"Bulgaria",
+  GR:"Greece", HR:"Croatia", SI:"Slovenia", EE:"Estonia",
+  LV:"Latvia", LT:"Lithuania", LU:"Luxembourg", MT:"Malta",
+  CY:"Cyprus", IE:"Ireland", EU:"European Union",
+  JP:"Japan", CN:"China", KR:"South Korea", IN:"India",
+  AU:"Australia", NZ:"New Zealand",
+  ZA:"South Africa", NG:"Nigeria", KE:"Kenya", EG:"Egypt",
+  IL:"Israel", SA:"Saudi Arabia", AE:"UAE", TR:"Turkey",
+  RU:"Russia", SG:"Singapore", TH:"Thailand", MY:"Malaysia",
+  ID:"Indonesia", PH:"Philippines", VN:"Vietnam", TW:"Taiwan",
+  PK:"Pakistan", BD:"Bangladesh",
+  WHO:"WHO (Geneva)", LI:"Liechtenstein",
+  AG:"Antigua and Barbuda", AM:"Armenia", BB:"Barbados",
+  BH:"Bahrain", BJ:"Benin", BS:"Bahamas", BY:"Belarus",
+  BZ:"Belize", CF:"Central African Republic", CG:"Congo",
+  CU:"Cuba", CV:"Cape Verde", DJ:"Djibouti", DM:"Dominica",
+  ER:"Eritrea", GD:"Grenada", GQ:"Equatorial Guinea",
+  GW:"Guinea-Bissau", GY:"Guyana", HT:"Haiti", JM:"Jamaica",
+  KG:"Kyrgyzstan", KH:"Cambodia", KN:"Saint Kitts and Nevis",
+  KW:"Kuwait", KZ:"Kazakhstan", LA:"Laos", LC:"Saint Lucia",
+  MA:"Morocco", ML:"Mali", MM:"Myanmar", NE:"Niger",
+  OM:"Oman", QA:"Qatar", SR:"Suriname",
+  ST:"Sao Tome and Principe", TD:"Chad", TG:"Togo",
+  TT:"Trinidad and Tobago", VC:"Saint Vincent and the Grenadines",
+  AO:"Angola", BF:"Burkina Faso", BI:"Burundi", BN:"Brunei",
+  CD:"Democratic Republic of the Congo", CI:"Côte d'Ivoire",
+  CM:"Cameroon", ET:"Ethiopia", GA:"Gabon", GH:"Ghana",
+  GM:"Gambia", GN:"Guinea", LR:"Liberia", PE:"Peru",
+  RW:"Rwanda", SD:"Sudan", SL:"Sierra Leone", SN:"Senegal",
+  SO:"Somalia", SS:"South Sudan", TZ:"Tanzania", UG:"Uganda"
+};
+
+// ISO-2 to ISO-numeric for matching TopoJSON IDs
+const ISO2_TO_NUM = {
+  US:"840", CA:"124", MX:"484", BR:"076", AR:"032", CL:"152", CO:"170",
+  GB:"826", FR:"250", DE:"276", IT:"380", ES:"724", PT:"620", NL:"528",
+  BE:"056", CH:"756", AT:"040", SE:"752", NO:"578", DK:"208", FI:"246",
+  PL:"616", CZ:"203", SK:"703", HU:"348", RO:"642", BG:"100", GR:"300",
+  HR:"191", SI:"705", EE:"233", LV:"428", LT:"440", LU:"442", MT:"470",
+  CY:"196", IE:"372",
+  JP:"392", CN:"156", KR:"410", IN:"356", AU:"036", NZ:"554",
+  ZA:"710", NG:"566", KE:"404", EG:"818", IL:"376", SA:"682", AE:"784",
+  TR:"792", RU:"643", SG:"702", TH:"764", MY:"458", ID:"360", PH:"608",
+  VN:"704", TW:"158", PK:"586", BD:"050",
+  LI:"438",
+  AO:"024", BI:"108", BN:"096", BW:"072", CD:"180", CM:"120", CI:"384",
+  ET:"231", GA:"266", GE:"268", GH:"288", GM:"270", GN:"324", HK:"344",
+  IR:"364", IS:"352", JO:"400", KM:"174", LR:"430", LS:"426", MG:"450",
+  MU:"480", MW:"454", MZ:"508", NA:"516", PE:"604", PG:"598", RW:"646",
+  SC:"690", SL:"694", SN:"686", SO:"706", SS:"728", SZ:"748", TZ:"834",
+  UA:"804", UG:"800", ZM:"894", ZW:"716", BF:"854", BT:"064", EC:"218",
+  SD:"729",
+  AG:"028", AM:"051", BB:"052", BH:"048", BJ:"204", BS:"044",
+  BY:"112", BZ:"084", CF:"140", CG:"178", CU:"192", CV:"132",
+  DJ:"262", DM:"212", ER:"232", GD:"308", GQ:"226", GW:"624",
+  GY:"328", HT:"332", JM:"388", KG:"417", KH:"116", KN:"659",
+  KW:"414", KZ:"398", LA:"418", LC:"662", MA:"504", ML:"466",
+  MM:"104", NE:"562", OM:"512", QA:"634", SR:"740", ST:"678",
+  TD:"148", TG:"768", TT:"780", VC:"670"
+};
+
+// ── State ──────────────────────────────────────────────────────────
+
+let agreements = [];
+let entities = {};
+let worldData = null;
+let svg, g, projection, path;
+let countryPaths;
+let arcGroup, fillGroup;
+let yearMin, yearMax;
+let _currentZoomK = 1;
+// Arcs drawn as Bézier curves in projected screen space (no geographic interpolation)
+const _graticule = d3.geoGraticule();
+const _mapBounds = {
+  type: "Polygon",
+  coordinates: [[
+    [-180, -55],
+    [ 180, -55],
+    [ 180,  85],
+    [-180,  85],
+    [-180, -55]
+  ]]
+};
+function currentZoomK() { return _currentZoomK; }
+
+// Active filters
+const filters = {
+  country: "all",
+  categories: new Set(Object.keys(CATEGORY_COLORS)),
+  yearRange: [1900, 2030],
+  statuses: new Set(["active"])
+};
+
+// ── Init ───────────────────────────────────────────────────────────
+
+async function init() {
+  try {
+    // Load world geometry: try local first, then CDN fallback
+    async function loadWorld() {
+      try {
+        const local = await d3.json("/data/world-110m.json");
+        if (local) return local;
+      } catch (e) { /* local failed, try CDN */ }
+      return d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json");
+    }
+
+    worldData = await loadWorld();
+    if (!worldData) {
+      document.getElementById("loading").textContent = "Error loading world map data.";
+      return;
+    }
+
+    // Use inlined agreement data
+    agreements = AGREEMENTS_DATA.agreements;
+    entities = AGREEMENTS_DATA.entities || {};
+    window._countryCoordinates = AGREEMENTS_DATA.country_coordinates || {};
+
+    document.getElementById("loading").style.display = "none";
+    buildMap();
+    buildFilters();
+    buildLegend();
+    render();
+    setupInteractions();
+
+    window.addEventListener("resize", debounce(() => { resizeMap(); render(); }, 200));
+  } catch (err) {
+    document.getElementById("loading").textContent = "Error: " + err.message;
+    console.error(err);
+  }
+}
+
+// ── Map Construction ───────────────────────────────────────────────
+
+function buildMap() {
+  const container = document.getElementById("map-container");
+  const width = container.clientWidth;
+  const height = container.clientHeight || window.innerHeight - 40;
+
+  svg = d3.select("#map-container")
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  // Arrow marker definitions — small chevrons proportionate to 0.4px stroke
+  // markerUnits="strokeWidth" means marker dimensions scale with stroke-width,
+  // which is already zoom-compensated (0.4/k), so markers auto-scale with zoom.
+  const defs = svg.append("defs");
+  Object.entries(CATEGORY_COLORS).forEach(([cat, color]) => {
+    // marker-end arrow (at the tip of unilateral arcs)
+    defs.append("marker")
+      .attr("id", `arrow-${cat}`)
+      .attr("viewBox", "0 0 4 3")
+      .attr("refX", 4)
+      .attr("refY", 1.5)
+      .attr("markerWidth", 4)
+      .attr("markerHeight", 3)
+      .attr("markerUnits", "strokeWidth")
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M0,0 L4,1.5 L0,3 Z")
+      .style("fill", color);
+
+    // marker-mid arrow (repeated along the arc)
+    defs.append("marker")
+      .attr("id", `arrow-mid-${cat}`)
+      .attr("viewBox", "0 0 4 3")
+      .attr("refX", 2)
+      .attr("refY", 1.5)
+      .attr("markerWidth", 4)
+      .attr("markerHeight", 3)
+      .attr("markerUnits", "strokeWidth")
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M0,0 L4,1.5 L0,3 Z")
+      .style("fill", color);
+  });
+
+  projection = d3.geoMercator()
+    .fitSize([width, height], _mapBounds);
+
+  path = d3.geoPath(projection);
+
+  g = svg.append("g");
+
+  // Sphere (ocean)
+  g.append("path")
+    .datum({ type: "Sphere" })
+    .attr("class", "sphere")
+    .attr("d", path);
+
+  // Graticule
+  g.append("path")
+    .datum(_graticule())
+    .attr("class", "graticule")
+    .attr("d", path);
+
+  // Country fill layer (for multilateral highlights)
+  fillGroup = g.append("g").attr("class", "fill-layer");
+
+  // Countries
+  const countries = topojson.feature(worldData, worldData.objects.countries);
+  countryPaths = g.append("g").attr("class", "countries-layer")
+    .selectAll("path")
+    .data(countries.features)
+    .join("path")
+    .attr("class", "country")
+    .attr("d", path)
+    .attr("data-id", d => d.id);
+
+  // Arc layer
+  arcGroup = g.append("g").attr("class", "arc-layer");
+
+  // Zoom behavior
+  const zoom = d3.zoom()
+    .scaleExtent([1, 12])
+    .on("zoom", (event) => {
+      g.attr("transform", event.transform);
+      _currentZoomK = event.transform.k;
+      // Scale strokes inversely to keep consistent visual weight
+      g.selectAll(".arc").attr("stroke-width", 0.4 / event.transform.k);
+      g.selectAll(".country").attr("stroke-width", 0.25 / event.transform.k);
+    });
+
+  svg.call(zoom);
+}
+
+function resizeMap() {
+  const container = document.getElementById("map-container");
+  const width = container.clientWidth;
+  const height = container.clientHeight || window.innerHeight - 40;
+  svg.attr("width", width).attr("height", height);
+  projection.fitSize([width, height], _mapBounds);
+  path = d3.geoPath(projection);
+
+  g.select(".sphere").attr("d", path);
+  g.select(".graticule").attr("d", path(_graticule()));
+  g.selectAll(".country").attr("d", path);
+}
+
+// ── Filters ────────────────────────────────────────────────────────
+
+function buildFilters() {
+  // Country dropdown
+  const countrySet = new Set();
+  agreements.forEach(a => {
+    getAllParties(a).forEach(p => {
+      if (p === "EU" && entities.EU) {
+        entities.EU.fill_countries.forEach(c => countrySet.add(c));
+      } else if (p !== "WHO") {
+        countrySet.add(p);
+      }
+    });
+  });
+
+  const countrySelect = document.getElementById("country-filter");
+  const sortedCountries = [...countrySet].sort((a, b) =>
+    (COUNTRY_NAMES[a] || a).localeCompare(COUNTRY_NAMES[b] || b)
+  );
+  sortedCountries.forEach(code => {
+    const opt = document.createElement("option");
+    opt.value = code;
+    opt.textContent = COUNTRY_NAMES[code] || code;
+    countrySelect.appendChild(opt);
+  });
+  // Also add EU as a selectable entity
+  if (entities.EU) {
+    const opt = document.createElement("option");
+    opt.value = "EU";
+    opt.textContent = "European Union";
+    countrySelect.appendChild(opt);
+  }
+
+  countrySelect.addEventListener("change", () => {
+    filters.country = countrySelect.value;
+    render();
+    if (countrySelect.value !== "all") {
+      showCountryPanel(countrySelect.value);
+    } else {
+      document.getElementById("info-panel").style.display = "none";
+    }
+  });
+
+  // Category checkboxes
+  const catContainer = document.getElementById("category-filters");
+  Object.entries(CATEGORY_COLORS).forEach(([cat, color]) => {
+    const label = document.createElement("label");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = true;
+    cb.value = cat;
+    cb.addEventListener("change", () => {
+      if (cb.checked) filters.categories.add(cat);
+      else filters.categories.delete(cat);
+      render();
+    });
+    const swatch = document.createElement("span");
+    swatch.className = "color-swatch";
+    swatch.style.background = color;
+    label.appendChild(cb);
+    label.appendChild(swatch);
+    label.appendChild(document.createTextNode(" " + (CATEGORY_LABELS[cat] || cat)));
+    catContainer.appendChild(label);
+  });
+
+  // Year range
+  computeYearBounds();
+  const yearMinEl = document.getElementById("year-min");
+  const yearMaxEl = document.getElementById("year-max");
+  yearMinEl.min = yearMin;
+  yearMinEl.max = yearMax;
+  yearMinEl.value = yearMin;
+  yearMaxEl.min = yearMin;
+  yearMaxEl.max = yearMax;
+  yearMaxEl.value = yearMax;
+  filters.yearRange = [yearMin, yearMax];
+  updateYearLabel();
+
+  yearMinEl.addEventListener("input", () => {
+    if (+yearMinEl.value > +yearMaxEl.value) yearMinEl.value = yearMaxEl.value;
+    filters.yearRange[0] = +yearMinEl.value;
+    updateYearLabel();
+    render();
+  });
+  yearMaxEl.addEventListener("input", () => {
+    if (+yearMaxEl.value < +yearMinEl.value) yearMaxEl.value = yearMinEl.value;
+    filters.yearRange[1] = +yearMaxEl.value;
+    updateYearLabel();
+    render();
+  });
+
+  // Status checkboxes
+  const statusContainer = document.getElementById("status-filters");
+  const statusLabels = { active: "Active", expired: "Expired", negotiation: "Under Negotiation" };
+  Object.entries(statusLabels).forEach(([key, label]) => {
+    const lbl = document.createElement("label");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = STATUS_DEFAULTS[key];
+    cb.value = key;
+    if (STATUS_DEFAULTS[key]) filters.statuses.add(key);
+    cb.addEventListener("change", () => {
+      if (cb.checked) filters.statuses.add(key);
+      else filters.statuses.delete(key);
+      render();
+    });
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(" " + label));
+    statusContainer.appendChild(lbl);
+  });
+}
+
+function computeYearBounds() {
+  const years = agreements.map(a => a.year_signed || a.year_operational).filter(Boolean);
+  yearMin = years.length ? Math.min(...years) : 1990;
+  yearMax = years.length ? Math.max(...years) : 2025;
+}
+
+function updateYearLabel() {
+  const label = document.getElementById("year-label");
+  label.textContent = `${filters.yearRange[0]} – ${filters.yearRange[1]}`;
+  // Update track highlight
+  const track = document.getElementById("year-track-active");
+  const range = yearMax - yearMin || 1;
+  const left = ((filters.yearRange[0] - yearMin) / range) * 100;
+  const right = ((filters.yearRange[1] - yearMin) / range) * 100;
+  track.style.left = left + "%";
+  track.style.width = (right - left) + "%";
+}
+
+function buildLegend() {
+  const legend = document.getElementById("legend");
+  let html = "";
+  Object.entries(CATEGORY_COLORS).forEach(([cat, color]) => {
+    html += `<div class="legend-item">
+      <span class="legend-line" style="background:${color};"></span>
+      <span>${CATEGORY_LABELS[cat] || cat}</span>
+    </div>`;
+  });
+  html += `<div class="legend-item" style="margin-top:6px;border-top:1px solid #eee;padding-top:4px;">
+    <span class="legend-line" style="background:#666;border-top:2px dashed #666;height:0;"></span>
+    <span>Expired / Negotiation</span>
+  </div>`;
+  html += `<div class="legend-item">
+    <span style="font-size:13px;letter-spacing:-1px;">&#9655;&#9655;&#9655;</span>
+    <span>A relies on assessment of B</span>
+  </div>`;
+  legend.innerHTML = html;
+}
+
+// ── Rendering ──────────────────────────────────────────────────────
+
+function getAllParties(a) {
+  // Normalize: combine parties, from, and to into a single list
+  const result = new Set(a.parties || []);
+  if (a.from) result.add(a.from);
+  if (a.to) a.to.forEach(t => result.add(t));
+  return [...result];
+}
+
+function passesFilters(a) {
+  // Category filter
+  if (!filters.categories.has(a.category)) return false;
+
+  // Status filter
+  if (!filters.statuses.has(a.status)) return false;
+
+  // Year filter
+  const y = a.year_signed || a.year_operational;
+  if (y && (y < filters.yearRange[0] || y > filters.yearRange[1])) return false;
+
+  // Country filter
+  if (filters.country !== "all") {
+    const code = filters.country;
+    const allParties = getAllParties(a);
+    let match = allParties.includes(code);
+    // If filtering by an EU member, also match agreements where EU is a party
+    if (!match && entities.EU && entities.EU.fill_countries.includes(code)) {
+      match = allParties.includes("EU");
+    }
+    // If filtering by EU, match agreements where EU is a party
+    if (!match && code === "EU") {
+      match = allParties.includes("EU");
+    }
+    if (!match) return false;
+  }
+
+  return true;
+}
+
+function getArcCoords(partyCode, agreement) {
+  if (partyCode === "EU" && entities.EU) {
+    // Use EMA location for EMA-specific agreements, Brussels for EU-level
+    const isEma = agreement && (agreement.name || "").toLowerCase().includes("ema");
+    return isEma ? (entities.EU.arc_location_ema || entities.EU.arc_location) : entities.EU.arc_location;
+  }
+  // Prefer data's country_coordinates over hardcoded centroids
+  const dataCoords = window._countryCoordinates && window._countryCoordinates[partyCode];
+  if (dataCoords) return dataCoords;
+  const c = COUNTRY_CENTROIDS[partyCode];
+  return c || null;
+}
+
+function render() {
+  const visible = agreements.filter(passesFilters);
+
+  // Clear previous
+  arcGroup.selectAll("*").remove();
+  fillGroup.selectAll("*").remove();
+
+  // Reset all country fills
+  countryPaths.style("fill", null).style("fill-opacity", null).attr("class", "country");
+
+  // Track country agreement counts for hover info
+  const countryAgreementCounts = {};
+  visible.forEach(a => {
+    const allP = getAllParties(a);
+    allP.forEach(p => {
+      if (p === "EU" && entities.EU) {
+        entities.EU.fill_countries.forEach(c => {
+          countryAgreementCounts[c] = (countryAgreementCounts[c] || 0) + 1;
+        });
+      } else {
+        countryAgreementCounts[p] = (countryAgreementCounts[p] || 0) + 1;
+      }
+    });
+  });
+
+  // Country fills for multilateral agreements — category-colored, adaptive opacity
+  // fillColors maps numId → { color, priority }
+  const fillColors = {};
+  visible.forEach(a => {
+    if (a.type === "multilateral") {
+      const color = CATEGORY_COLORS[a.category];
+      const priority = CATEGORY_PRIORITY[a.category] || 0;
+      const allP = getAllParties(a);
+      allP.forEach(p => {
+        const codes = (p === "EU" && entities.EU) ? entities.EU.fill_countries : [p];
+        codes.forEach(c => {
+          const numId = ISO2_TO_NUM[c];
+          if (!numId) return;
+          const key = String(numId);
+          if (!fillColors[key] || priority > fillColors[key].priority) {
+            fillColors[key] = { color, priority };
+          }
+        });
+      });
+    }
+  });
+
+  // Adaptive opacity: subtle when broad filters, bold when narrowed
+  const activeCategories = filters.categories.size;
+  const hasCountryFilter = filters.country !== "all";
+  const fillOpacity = (hasCountryFilter || activeCategories <= 2) ? 0.5 : 0.15;
+
+  // Apply country fills — must use .style() not .attr() (CSS specificity)
+  countryPaths.each(function(d) {
+    const entry = fillColors[String(d.id)];
+    if (entry) {
+      d3.select(this).style("fill", entry.color).style("fill-opacity", fillOpacity);
+    } else {
+      d3.select(this).style("fill", "#e0e0e0").style("fill-opacity", 1);
+    }
+  });
+
+  // Store counts on country elements for hover
+  countryPaths.each(function(d) {
+    // Find ISO-2 from numeric (compare as strings to handle type mismatch)
+    const iso2 = Object.entries(ISO2_TO_NUM).find(([, num]) => String(num) === String(d.id));
+    if (iso2) {
+      d3.select(this).attr("data-iso2", iso2[0])
+        .attr("data-count", countryAgreementCounts[iso2[0]] || 0);
+    }
+  });
+
+  // Draw arcs
+  visible.forEach(a => {
+    // Agreements with from/to fields always get arcs (unilateral reliance pathways)
+    if (a.from && a.to && a.to.length > 0) {
+      const fromCoords = getArcCoords(a.from, a);
+      if (!fromCoords) return;
+      a.to.forEach(toCode => {
+        const toCoords = getArcCoords(toCode, a);
+        if (!toCoords) return;
+        if (a.flowReversed) {
+          drawArc(toCoords, fromCoords, a, toCode, a.from);
+        } else {
+          drawArc(fromCoords, toCoords, a, a.from, toCode);
+        }
+        if (toCode === "EU" && entities.EU) {
+          highlightEuFill(CATEGORY_COLORS[a.category]);
+        }
+        if (a.from === "EU" && entities.EU) {
+          highlightEuFill(CATEGORY_COLORS[a.category]);
+        }
+      });
+      return;
+    }
+
+    // True multilateral agreements (no from/to): country fills only, no arcs
+    if (a.type === "multilateral") return;
+
+    // Bilateral agreements with parties array
+    const parties = a.parties || [];
+    if (parties.length < 2) return;
+
+    for (let i = 0; i < parties.length; i++) {
+      for (let j = i + 1; j < parties.length; j++) {
+        const from = getArcCoords(parties[i], a);
+        const to = getArcCoords(parties[j], a);
+        if (!from || !to) continue;
+        drawArc(from, to, a, parties[i], parties[j]);
+        if ((parties[i] === "EU" || parties[j] === "EU") && entities.EU) {
+          highlightEuFill(CATEGORY_COLORS[a.category]);
+        }
+      }
+    }
+  });
+}
+
+function highlightEuFill(color) {
+  if (!entities.EU) return;
+  const hasCountryFilter = filters.country !== "all";
+  const activeCategories = filters.categories.size;
+  const opacity = (hasCountryFilter || activeCategories <= 2) ? 0.5 : 0.15;
+  entities.EU.fill_countries.forEach(c => {
+    const numId = ISO2_TO_NUM[c];
+    if (numId) {
+      countryPaths.filter(d => String(d.id) === String(numId))
+        .style("fill", color).style("fill-opacity", opacity);
+    }
+  });
+}
+
+function drawArc(fromLatLon, toLatLon, agreement, fromCode, toCode) {
+  const color = CATEGORY_COLORS[agreement.category] || "#999";
+  const isDashed = agreement.status === "expired" || agreement.status === "negotiation";
+  const isUnilateral = agreement.directionality === "unilateral";
+
+  // Project geographic coordinates to screen pixels.
+  // Drawing arcs in screen space (Bézier curves between pixel positions)
+  // avoids the Mercator distortion problem where great-circle paths between
+  // near-antipodal points (e.g. Singapore–US, 179° apart) traverse high
+  // latitudes that Mercator stretches enormously, producing Arctic spikes.
+  const p0 = projection([fromLatLon[1], fromLatLon[0]]);
+  const p1 = projection([toLatLon[1], toLatLon[0]]);
+  if (!p0 || !p1) return;
+
+  // Compute a control point for a quadratic Bézier, offset perpendicular
+  // to the line between endpoints. The offset creates the arc curvature.
+  const mx = (p0[0] + p1[0]) / 2;
+  const my = (p0[1] + p1[1]) / 2;
+  const dx = p1[0] - p0[0];
+  const dy = p1[1] - p0[1];
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  // Perpendicular offset: proportional to distance, capped to avoid
+  // excessive curvature on very long arcs. Negative ny pushes the arc
+  // upward (toward lower y) on screen, giving a consistent visual curve.
+  const curvature = Math.min(dist * 0.2, 80);
+  const nx = -dy / (dist || 1);
+  const ny = dx / (dist || 1);
+  const cx = mx + nx * curvature;
+  const cy = my + ny * curvature;
+
+  // Build the SVG path string.
+  // Unilateral arcs need explicit vertices for marker-mid placement (SVG
+  // only places marker-mid at interior vertices of a polyline, not along
+  // smooth curves). Sample ~10 points along the Bézier for these.
+  // Non-unilateral arcs use a native SVG quadratic Bézier for smoothness.
+  let d;
+  if (isUnilateral) {
+    const numSeg = 10;
+    const pts = [];
+    for (let i = 0; i <= numSeg; i++) {
+      const t = i / numSeg;
+      const u = 1 - t;
+      // Quadratic Bézier: B(t) = (1-t)²·P0 + 2(1-t)t·C + t²·P1
+      const bx = u * u * p0[0] + 2 * u * t * cx + t * t * p1[0];
+      const by = u * u * p0[1] + 2 * u * t * cy + t * t * p1[1];
+      pts.push(`${bx.toFixed(2)},${by.toFixed(2)}`);
+    }
+    d = `M${pts[0]} L${pts.slice(1).join(" L")}`;
+  } else {
+    d = `M${p0[0].toFixed(2)},${p0[1].toFixed(2)} Q${cx.toFixed(2)},${cy.toFixed(2)} ${p1[0].toFixed(2)},${p1[1].toFixed(2)}`;
+  }
+
+  const arcPath = arcGroup.append("path")
+    .attr("class", "arc")
+    .attr("d", d)
+    .attr("stroke", color)
+    .style("--arc-color", color)
+    .attr("stroke-width", 0.4 / currentZoomK())
+    .style("fill", "none")
+    .attr("opacity", 0.65)
+    .attr("data-agreement-id", agreement.id);
+
+  if (isDashed) {
+    arcPath.attr("stroke-dasharray", "6,4");
+  }
+
+  // Unilateral arcs get repeated arrows along the path (marker-mid)
+  // and an arrowhead at the end (marker-end)
+  if (isUnilateral) {
+    arcPath.attr("marker-mid", `url(#arrow-mid-${agreement.category})`);
+    arcPath.attr("marker-end", `url(#arrow-${agreement.category})`);
+  }
+
+  // Hover
+  arcPath.on("mouseenter", function(event) {
+    d3.select(this).attr("opacity", 1);
+    showTooltip(event, agreement, fromCode, toCode);
+  });
+
+  arcPath.on("mousemove", function(event) {
+    moveTooltip(event);
+  });
+
+  arcPath.on("mouseleave", function() {
+    d3.select(this).attr("opacity", 0.65);
+    hideTooltip();
+  });
+
+  arcPath.on("click", function(event) {
+    event.stopPropagation();
+    showInfoPanel(agreement);
+  });
+}
+
+// ── Interactions ───────────────────────────────────────────────────
+
+function setupInteractions() {
+  // Country hover
+  countryPaths
+    .on("mouseenter", function(event) {
+      const el = d3.select(this);
+      el.classed("country-highlighted", true);
+      const iso2 = el.attr("data-iso2");
+      const count = el.attr("data-count") || 0;
+      const name = COUNTRY_NAMES[iso2] || iso2 || "Unknown";
+
+      const tooltip = document.getElementById("tooltip");
+      tooltip.innerHTML = `<div class="tt-name">${escapeHtml(name)}</div>
+        <div class="tt-row">${count} agreement${count !== "1" ? "s" : ""}</div>`;
+      tooltip.style.display = "block";
+      moveTooltip(event);
+    })
+    .on("mousemove", function(event) {
+      moveTooltip(event);
+    })
+    .on("mouseleave", function() {
+      d3.select(this).classed("country-highlighted", false);
+      hideTooltip();
+    })
+    .on("click", function(event) {
+      event.stopPropagation();
+      const iso2 = d3.select(this).attr("data-iso2");
+      if (iso2) {
+        const select = document.getElementById("country-filter");
+        select.value = iso2;
+        filters.country = iso2;
+        render();
+        showCountryPanel(iso2);
+      }
+    });
+
+  // Click on background to dismiss info panel
+  svg.on("click", function() {
+    document.getElementById("info-panel").style.display = "none";
+  });
+
+  // Sidebar toggle (mobile)
+  document.getElementById("sidebar-toggle").addEventListener("click", () => {
+    document.getElementById("sidebar").classList.toggle("open");
+  });
+}
+
+// ── Tooltip & Info Panel ───────────────────────────────────────────
+
+function showTooltip(event, agreement, fromCode, toCode) {
+  const tooltip = document.getElementById("tooltip");
+  const cat = CATEGORY_LABELS[agreement.category] || agreement.category;
+  const allP = getAllParties(agreement);
+  const parties = allP.map(p => COUNTRY_NAMES[p] || p).join(", ");
+  const year = agreement.year_signed || agreement.year_operational || "N/A";
+
+  tooltip.innerHTML = `
+    <div class="tt-name">${escapeHtml(agreement.name)}</div>
+    <div class="tt-cat" style="color:${CATEGORY_COLORS[agreement.category]}">${escapeHtml(cat)}</div>
+    <div class="tt-row"><strong>Parties:</strong> ${escapeHtml(parties)}</div>
+    <div class="tt-row"><strong>Year:</strong> ${escapeHtml(String(year))}</div>
+    <div class="tt-row"><strong>Status:</strong> ${escapeHtml(agreement.status)}</div>
+  `;
+  tooltip.style.display = "block";
+  moveTooltip(event);
+}
+
+function moveTooltip(event) {
+  const tooltip = document.getElementById("tooltip");
+  const container = document.getElementById("map-container");
+  const rect = container.getBoundingClientRect();
+  let x = event.clientX - rect.left + 14;
+  let y = event.clientY - rect.top + 14;
+
+  // Keep tooltip in bounds
+  const tw = tooltip.offsetWidth;
+  const th = tooltip.offsetHeight;
+  if (x + tw > rect.width - 10) x = x - tw - 28;
+  if (y + th > rect.height - 10) y = y - th - 28;
+
+  tooltip.style.left = x + "px";
+  tooltip.style.top = y + "px";
+}
+
+function hideTooltip() {
+  document.getElementById("tooltip").style.display = "none";
+}
+
+function showCountryPanel(iso2) {
+  const panel = document.getElementById("info-panel");
+  const countryName = COUNTRY_NAMES[iso2] || iso2;
+
+  // Find all agreements involving this country
+  const allMatching = agreements.filter(a => {
+    const allP = getAllParties(a);
+    if (allP.includes(iso2)) return true;
+    // If country is an EU member, also include EU-level agreements
+    if (entities.EU && entities.EU.fill_countries.includes(iso2) && allP.includes("EU")) return true;
+    return false;
+  });
+
+  // Apply active filters (category, year range, status)
+  const matching = allMatching.filter(a => passesFilters(a));
+
+  const totalCount = allMatching.length;
+  const filteredCount = matching.length;
+  const filtersNarrow = filteredCount < totalCount;
+
+  let html = `<span class="ip-close" onclick="document.getElementById('info-panel').style.display='none'">&times;</span>`;
+  html += `<div class="ip-name">${escapeHtml(countryName)}</div>`;
+  if (filtersNarrow) {
+    html += `<div class="ip-row" style="margin-bottom:10px;color:#666;">Showing ${filteredCount} of ${totalCount} agreement${totalCount !== 1 ? "s" : ""}</div>`;
+  } else {
+    html += `<div class="ip-row" style="margin-bottom:10px;color:#666;">${totalCount} agreement${totalCount !== 1 ? "s" : ""}</div>`;
+  }
+
+  if (matching.length === 0) {
+    html += `<div class="ip-row" style="color:#888;">No agreements found.</div>`;
+  } else {
+    matching.forEach(a => {
+      const cat = CATEGORY_LABELS[a.category] || a.category;
+      const color = CATEGORY_COLORS[a.category] || "#666";
+      const year = a.year_signed || a.year_operational || "";
+      const safeId = escapeHtml(a.id);
+      html += `<div class="country-panel-entry" style="padding:6px 0;border-bottom:1px solid #eee;cursor:pointer;" data-agreement-id="${safeId}">`;
+      html += `<div style="font-weight:600;font-size:12px;">${escapeHtml(a.name)}</div>`;
+      html += `<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;text-transform:uppercase;color:#fff;background:${color};margin-top:2px;">${escapeHtml(cat)}</span>`;
+      if (year) html += `<span style="font-size:11px;color:#888;margin-left:6px;">${escapeHtml(String(year))}</span>`;
+      html += `</div>`;
+    });
+  }
+
+  panel.innerHTML = html;
+  // Wire up click handlers via event delegation (avoids inline onclick injection)
+  panel.querySelectorAll(".country-panel-entry[data-agreement-id]").forEach(entry => {
+    entry.addEventListener("click", () => {
+      const id = entry.getAttribute("data-agreement-id");
+      const a = agreements.find(x => x.id === id);
+      if (a) showInfoPanel(a);
+    });
+  });
+  panel.style.display = "block";
+}
+
+function showInfoPanel(agreement) {
+  const panel = document.getElementById("info-panel");
+  const cat = CATEGORY_LABELS[agreement.category] || agreement.category;
+  const allP = getAllParties(agreement);
+  const parties = allP.map(p => COUNTRY_NAMES[p] || p).join(", ");
+  const yearSigned = agreement.year_signed || "N/A";
+  const yearOp = agreement.year_operational || "N/A";
+  const color = CATEGORY_COLORS[agreement.category] || "#666";
+
+  let html = `<span class="ip-close" onclick="document.getElementById('info-panel').style.display='none'">&times;</span>`;
+  html += `<div class="ip-name">${escapeHtml(agreement.name)}</div>`;
+  html += `<span class="ip-cat" style="background:${color}">${escapeHtml(cat)}</span>`;
+  html += `<div class="ip-row"><span class="ip-label">Parties:</span> ${escapeHtml(parties)}</div>`;
+  html += `<div class="ip-row"><span class="ip-label">Year Signed:</span> ${escapeHtml(String(yearSigned))}</div>`;
+  html += `<div class="ip-row"><span class="ip-label">Year Operational:</span> ${escapeHtml(String(yearOp))}</div>`;
+  html += `<div class="ip-row"><span class="ip-label">Status:</span> ${escapeHtml(agreement.status)}</div>`;
+  html += `<div class="ip-row"><span class="ip-label">Directionality:</span> ${escapeHtml(agreement.directionality || "bilateral")}</div>`;
+
+  if (agreement.description) {
+    html += `<div class="ip-desc">${escapeHtml(agreement.description)}</div>`;
+  }
+  const sourceUrl = agreement.source_url || agreement.source;
+  if (sourceUrl) {
+    html += `<div class="ip-row" style="margin-top:8px;"><a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener">Source</a></div>`;
+  }
+
+  panel.innerHTML = html;
+  panel.style.display = "block";
+}
+
+// ── Utilities ──────────────────────────────────────────────────────
+
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); };
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────
+
+function initTabs() {
+  const buttons = document.querySelectorAll(".tab-btn");
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      // Deactivate all tabs
+      buttons.forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
+      // Activate clicked tab
+      btn.classList.add("active");
+      document.getElementById("tab-" + btn.dataset.tab).style.display = "block";
+      // Build agreements table on first view
+      if (btn.dataset.tab === "agreements" && !window._agreementsTableBuilt) {
+        buildAgreementsTable();
+        window._agreementsTableBuilt = true;
+      }
+    });
+  });
+
+  // Populate guide colors list
+  const colorList = document.getElementById("guide-colors");
+  if (colorList) {
+    Object.entries(CATEGORY_COLORS).forEach(([cat, color]) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<span class="color-indicator" style="background:${color};"></span>${CATEGORY_LABELS[cat] || cat}`;
+      colorList.appendChild(li);
+    });
+  }
+}
+
+function buildAgreementsTable() {
+  const tbody = document.getElementById("agreements-tbody");
+  if (!tbody) return;
+
+  // Sort by year descending (newest first)
+  const sorted = [...agreements].sort((a, b) => {
+    const ya = a.year_signed || a.year_operational || 0;
+    const yb = b.year_signed || b.year_operational || 0;
+    return yb - ya;
+  });
+
+  function renderRows(data) {
+    tbody.innerHTML = "";
+    data.forEach(a => {
+      const cat = CATEGORY_LABELS[a.category] || a.category;
+      const color = CATEGORY_COLORS[a.category] || "#666";
+      const year = a.year_signed || a.year_operational || "N/A";
+      const allP = getAllParties(a);
+      const partiesStr = allP.map(p => COUNTRY_NAMES[p] || p).join(", ");
+      const truncated = partiesStr.length > 60 ? partiesStr.slice(0, 57) + "..." : partiesStr;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${escapeHtml(a.name)}</td>` +
+        `<td><span class="cat-badge" style="background:${color}">${escapeHtml(cat)}</span></td>` +
+        `<td>${escapeHtml(String(year))}</td>` +
+        `<td>${escapeHtml(a.status)}</td>` +
+        `<td title="${escapeHtml(partiesStr)}">${escapeHtml(truncated)}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  renderRows(sorted);
+
+  // Shared state for search + sort composition
+  let currentSort = { col: "year", asc: false };
+  const searchInput = document.getElementById("agreements-search");
+
+  function getFilteredAndSorted() {
+    const q = searchInput.value.toLowerCase().trim();
+    let data = sorted;
+    if (q) {
+      data = data.filter(a => {
+        const allP = getAllParties(a);
+        const partiesStr = allP.map(p => COUNTRY_NAMES[p] || p).join(", ");
+        const cat = CATEGORY_LABELS[a.category] || a.category;
+        const year = String(a.year_signed || a.year_operational || "");
+        const searchable = [a.name, cat, year, a.status, partiesStr].join(" ").toLowerCase();
+        return searchable.includes(q);
+      });
+    }
+    const dir = currentSort.asc ? 1 : -1;
+    return [...data].sort((a, b) => {
+      let va, vb;
+      switch (currentSort.col) {
+        case "name": va = a.name; vb = b.name; break;
+        case "category": va = a.category; vb = b.category; break;
+        case "year":
+          va = a.year_signed || a.year_operational || 0;
+          vb = b.year_signed || b.year_operational || 0;
+          return (va - vb) * dir;
+        case "status": va = a.status; vb = b.status; break;
+        case "parties":
+          va = getAllParties(a).map(p => COUNTRY_NAMES[p] || p).join(", ");
+          vb = getAllParties(b).map(p => COUNTRY_NAMES[p] || p).join(", ");
+          break;
+        default: return 0;
+      }
+      return String(va).localeCompare(String(vb)) * dir;
+    });
+  }
+
+  // Search filter
+  searchInput.addEventListener("input", () => {
+    renderRows(getFilteredAndSorted());
+  });
+
+  // Column sort
+  document.querySelectorAll("#agreements-table th[data-sort]").forEach(th => {
+    th.addEventListener("click", () => {
+      const col = th.dataset.sort;
+      if (currentSort.col === col) {
+        currentSort.asc = !currentSort.asc;
+      } else {
+        currentSort.col = col;
+        currentSort.asc = true;
+      }
+      renderRows(getFilteredAndSorted());
+    });
+  });
+}
+
+// ── Start ──────────────────────────────────────────────────────────
+
+document.addEventListener("DOMContentLoaded", () => {
+  init();
+  initTabs();
+});
+</script>
+
+<style is:global>
+  /* ===== Top Navigation ===== */
+  .top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #ccc;
+    background: white;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .site-name {
+    font-weight: 700;
+    border: 1px solid #333;
+    padding: 0.15rem 0.5rem;
+    color: var(--color-black);
+    text-decoration: none;
+  }
+
+  .site-name:hover {
+    border-color: black;
+  }
+
+  .nav-link {
+    color: var(--color-black);
+    text-decoration: none;
+  }
+
+  .nav-link.active {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .nav-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ===== Nav Tooltip ===== */
+  .nav-tooltip {
+    position: fixed;
+    z-index: 200;
+    max-width: 300px;
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    pointer-events: none;
+    border: 1px solid #ccc;
+    background: white;
+    color: var(--color-black);
+  }
+
+  /* ===== Page body ===== */
+  html, body {
+    background: #fafafa !important;
+    color: #222;
+    overflow-x: hidden;
+  }
+
+  /* ===== Map Scoped Styles ===== */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #fafafa;
+  color: #222;
+  overflow-x: hidden;
+}
+
+.reg-map #app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.reg-map #main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* --- Sidebar --- */
+
+.reg-map #sidebar {
+  width: 270px;
+  min-width: 270px;
+  background: #fff;
+  border-right: 1px solid #ddd;
+  padding: 18px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  z-index: 10;
+}
+
+.reg-map #sidebar h2 {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #555;
+  margin-bottom: 6px;
+}
+
+.reg-map #sidebar label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.reg-map #sidebar select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  background: #fff;
+}
+
+.reg-map .color-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.reg-map .filter-group {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 14px;
+}
+
+.reg-map .filter-group:last-child { border-bottom: none; }
+
+/* --- Year slider --- */
+
+.reg-map .year-range-container {
+  position: relative;
+  height: 36px;
+  margin-top: 4px;
+}
+
+.reg-map .year-range-container input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  height: 36px;
+  background: transparent;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.reg-map .year-range-container input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #377eb8;
+  cursor: pointer;
+  pointer-events: all;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.reg-map .year-range-container input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #377eb8;
+  cursor: pointer;
+  pointer-events: all;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.reg-map .year-range-track {
+  position: absolute;
+  top: 16px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: #ddd;
+  border-radius: 2px;
+}
+
+.reg-map .year-range-track .active {
+  position: absolute;
+  height: 100%;
+  background: #377eb8;
+  border-radius: 2px;
+}
+
+.reg-map #year-label {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  margin-top: 2px;
+}
+
+/* --- Map container --- */
+
+.reg-map #map-container {
+  flex: 1;
+  position: relative;
+  background: #f0f4f8;
+  overflow: hidden;
+}
+
+.reg-map #map-container svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.reg-map .country {
+  stroke: #999;
+  stroke-width: 0.25px;
+  transition: fill 0.15s, fill-opacity 0.15s;
+}
+
+.reg-map .country:hover {
+  filter: brightness(0.9);
+}
+
+.reg-map .country-highlighted {
+  stroke-width: 1px;
+}
+
+.reg-map .arc {
+  fill: none;
+  stroke-width: 0.4px;
+  opacity: 0.65;
+  cursor: pointer;
+  transition: opacity 0.15s, filter 0.15s;
+}
+
+.reg-map .arc:hover {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px var(--arc-color, #999));
+}
+
+.reg-map .graticule {
+  fill: none;
+  stroke: #e8e8e8;
+  stroke-width: 0.5px;
+}
+
+.reg-map .sphere {
+  fill: #f0f4f8;
+  stroke: #ccc;
+  stroke-width: 0.5px;
+}
+
+/* --- Tooltip --- */
+
+.reg-map #tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(255,255,255,0.96);
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 12px;
+  line-height: 1.5;
+  max-width: 300px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  display: none;
+  z-index: 100;
+}
+
+.reg-map #tooltip .tt-name { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+
+.reg-map #tooltip .tt-cat { font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 4px; }
+
+.reg-map #tooltip .tt-row { color: #555; }
+
+/* --- Info Panel --- */
+
+.reg-map #info-panel {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  width: 340px;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px 18px;
+  font-size: 13px;
+  line-height: 1.6;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  display: none;
+  z-index: 50;
+}
+
+.reg-map #info-panel .ip-close {
+  float: right;
+  cursor: pointer;
+  font-size: 18px;
+  color: #999;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.reg-map #info-panel .ip-close:hover { color: #333; }
+
+.reg-map #info-panel .ip-name { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+
+.reg-map #info-panel .ip-cat {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.reg-map #info-panel .ip-row { margin-bottom: 4px; }
+
+.reg-map #info-panel .ip-label { font-weight: 600; color: #555; }
+
+.reg-map #info-panel .ip-desc { margin-top: 8px; color: #444; border-top: 1px solid #eee; padding-top: 8px; }
+
+.reg-map #info-panel a { color: #377eb8; }
+
+/* --- Loading --- */
+
+.reg-map #loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  color: #888;
+}
+
+/* --- Descriptor Section (wrapper) --- */
+
+.reg-map #descriptor {
+  padding: 0;
+}
+
+/* --- Content Tabs --- */
+
+.reg-map .content-tabs {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+  border-top: 1px solid #ddd;
+}
+
+.reg-map .tab-buttons {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #ddd;
+  margin-bottom: 24px;
+}
+
+.reg-map .tab-btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.reg-map .tab-btn:hover {
+  color: #333;
+}
+
+.reg-map .tab-btn.active {
+  color: #1B4F72;
+  border-bottom-color: #1B4F72;
+  font-weight: 600;
+}
+
+.reg-map .tab-content {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #444;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.reg-map .tab-content h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 20px 0 8px;
+  color: #222;
+}
+
+.reg-map .tab-content h3:first-child {
+  margin-top: 0;
+}
+
+.reg-map .tab-content p {
+  margin-bottom: 12px;
+}
+
+.reg-map .tab-content a {
+  color: #377eb8;
+  text-decoration: none;
+}
+
+.reg-map .tab-content a:hover {
+  text-decoration: underline;
+}
+
+.reg-map .tab-content ul {
+  margin: 0 0 12px 20px;
+  padding: 0;
+}
+
+.reg-map .tab-content li {
+  margin-bottom: 6px;
+}
+
+/* --- Agreements table --- */
+
+.reg-map #agreements-search {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  margin-bottom: 12px;
+  background: #fff;
+}
+
+.reg-map #agreements-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.reg-map #agreements-table th {
+  text-align: left;
+  padding: 8px 10px;
+  background: #f5f7fa;
+  border-bottom: 2px solid #ddd;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.reg-map #agreements-table th:hover {
+  background: #e8ecf1;
+}
+
+.reg-map #agreements-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+.reg-map #agreements-table tr:hover td {
+  background: #f9fbfd;
+}
+
+.reg-map .cat-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.reg-map .glossary-term {
+  font-weight: 600;
+  color: #1B4F72;
+}
+
+.reg-map .color-indicator {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+/* --- Legend --- */
+
+.reg-map #legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 11px;
+  z-index: 20;
+}
+
+.reg-map #legend .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.reg-map #legend .legend-line {
+  width: 20px;
+  height: 2px;
+  flex-shrink: 0;
+}
+
+/* --- Sidebar toggle (mobile) --- */
+
+.reg-map #sidebar-toggle {
+  display: none;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 20;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .reg-map #app {
+  .reg-map height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+  }
+  #main {
+  .reg-map flex: none;
+    height: 60vh;
+    height: 60dvh;
+    min-height: 300px;
+  }
+  #map-container {
+  .reg-map height: 100%;
+    min-height: 300px;
+  }
+  #descriptor {
+  .reg-map flex: 1;
+    overflow-y: auto;
+    max-height: 40vh;
+    max-height: 40dvh;
+  }
+  .tab-content {
+  .reg-map max-height: none;
+    overflow-y: visible;
+  }
+  #info-panel {
+  .reg-map width: calc(100% - 32px);
+    max-width: 340px;
+    max-height: 40vh;
+    max-height: 40dvh;
+    left: 16px;
+    right: 16px;
+  }
+  #legend {
+  .reg-map max-width: calc(100% - 32px);
+    font-size: 10px;
+    padding: 6px 10px;
+  }
+  #sidebar {
+  .reg-map position: absolute;
+    left: -280px;
+    top: 0;
+    bottom: 0;
+    z-index: 30;
+    transition: left 0.25s;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+  }
+  #sidebar.open { left: 0; }
+  .reg-map #sidebar-toggle { display: block; }
+}
+
+@media (max-width: 768px) and (max-height: 400px) {
+  .reg-map #main {
+  .reg-map min-height: 0;
+    height: 50vh;
+    height: 50dvh;
+  }
+  #map-container {
+    min-height: 0;
+  }
+}
+</style>
+
+<script is:inline>
+  // Nav tooltip (same as other pages)
+  const navTooltip = document.createElement("div");
+  navTooltip.className = "nav-tooltip";
+  navTooltip.style.display = "none";
+  document.body.appendChild(navTooltip);
+
+  document.querySelectorAll(".nav-link[data-nav-tip]").forEach((link) => {
+    link.addEventListener("mouseenter", () => {
+      const tip = link.dataset.navTip;
+      if (!tip) return;
+      navTooltip.textContent = tip;
+      navTooltip.style.display = "block";
+      const rect = link.getBoundingClientRect();
+      const pad = 4;
+      let x = rect.left;
+      const y = rect.bottom + pad;
+      const tw = navTooltip.offsetWidth;
+      if (x + tw > window.innerWidth - pad) x = window.innerWidth - tw - pad;
+      navTooltip.style.left = x + "px";
+      navTooltip.style.top = y + "px";
+    });
+    link.addEventListener("mouseleave", () => {
+      navTooltip.style.display = "none";
+    });
+  });
+
+  // Offset map below fixed nav
+  const navEl = document.querySelector(".top-nav");
+  function updateMapLayout() {
+    const navH = navEl.offsetHeight;
+    const regMap = document.querySelector(".reg-map");
+    if (regMap) {
+      regMap.style.paddingTop = navH + "px";
+    }
+  }
+  updateMapLayout();
+  window.addEventListener("resize", updateMapLayout);
+</script>
