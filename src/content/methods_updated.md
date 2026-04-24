@@ -559,7 +559,7 @@ The EMA Article 57 dataset does not include legal status, that is, whether a dru
 
 ## Skill issue
 
-Nobody involved with this project has a background in pharmaceutical sciences or medicine. The accompanying inadequacies likely extend into other difficulties we encountered in completing this work. Though we made sincere efforts to avoid obvious mistakes, it seems likely that someone with a relevant background will spot errors. We invite them to inform us at medscheck@arbresearch.org.
+Nobody involved with this project has a background in pharmaceutical sciences or medicine. The accompanying inadequacies likely extend into other difficulties we encountered in completing this work. Though we made sincere efforts to avoid obvious mistakes, it seems likely that someone with a relevant background will spot errors. We invite them to inform us at hi@arbresearch.com.
 
 # Appendices
 
