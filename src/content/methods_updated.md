@@ -581,19 +581,4 @@ Compiled sheet of raw and processed data. See other sheets for details on indivi
 
 Contains most relevant files and data.
 
-## Appendix 4: Individual Processing Notebooks
-
-- [Claude_drug_parsing](https://colab.research.google.com/drive/1fjWFdHq5BAep7mF0qkf9opSAcgh0ux4B#scrollTo=vf1ZYQBXBwGU): Takes the ingredient lists from EEA+FDA+EMA+UK and uses Claude to parse into JSON lists
-- [drug_standardisation](https://colab.research.google.com/drive/1YsB2ehNHNfvCFMkN6h-qPCb1A7I5xeq1#scrollTo=4u35-A_KvV8n): Takes human-modified output from Claude and further standardizes
-- [Legality_by_country](https://colab.research.google.com/drive/1uped-VciaV1IkJ7yCnp6y0pWZYn6PYI8): Creates sheet of which key drug ingredients are available in which countries, sorted by drug name length
-- [A version of RxNorm](https://colab.research.google.com/drive/1cp1z2RVp1OvI2XKy2lGBwkc-mJ_0PQXw?authuser=1)
-- [Rxnorm_standardiser](https://colab.research.google.com/drive/1HLR_3yCdJAa0C25gjZp5zVzuCeqwZxxl#scrollTo=O89k6zot-pvr): Takes drug ingredients and outputs known RxNorm IDs associated with them
-
-## Appendix 5: Individual Data Sheets
-
-- [EEA+FDA+EMA+UK](https://docs.google.com/spreadsheets/d/1lWp1mgtk81QkyfhsOzuSgSAtkWK18pm1ajxugY0pEuk/edit?gid=1782942803#gid=1782942803): Compiled raw list of drug names, ingredients, and legalities across regulatory bodies
-- [Drugs_by_json_alternate](https://docs.google.com/spreadsheets/d/1Q7gqzGQP2e8uXQ_-nayD2RemmzmY9Pg6awxmquCbQmY/edit?gid=0#gid=0): Drug ingredients separated into lists by Claude, then checked and modified by humans
-- [Standardised_drugs](https://docs.google.com/spreadsheets/d/1Tn1fnJwe2NRgEZ6z0WocPNGsKPC0UpmSWk_GkfRlisY/edit?gid=0#gid=0): EEA+FDA+EMA+UK with extra column containing standardized names
-- [Drug_legality_design_one](https://docs.google.com/spreadsheets/d/1zx-etsZ3kOnbKgq2zCLGcOpGgqozJCNdjdNk621FjiE/edit?gid=0#gid=0): List of drugs and their legalities (wide format)
-- [Drug_legality_design_two](https://docs.google.com/spreadsheets/d/18tBLhi8tcvDlOcKY2khfYVcWa4venoU1ngXt5S2rVg4/edit?gid=0#gid=0): List of drugs and their legalities (long format)
-- [Rxnorm_ingredients](https://docs.google.com/spreadsheets/d/1RGNZswoxCYfuy-CMl75hylaxs-kZ8uuLGy_Bzt8OxyE/edit?gid=0#gid=0): Ingredients in drugs, their related RxNorm numbers, and RxNorm number names
+To replicate our entire pipeline, please see folder titled 'C Pilgrim' in the Google Drive.
