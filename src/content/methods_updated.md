@@ -579,6 +579,6 @@ Compiled sheet of raw and processed data. See other sheets for details on indivi
 
 [Meds Data](https://drive.google.com/drive/folders/1kPfUVqSH_Bqn_0lcJFbLnAqvkP_YmqRj)
 
-Contains most relevant files and data.
+Contains all relevant files and data.
 
 To replicate our entire pipeline, please see folder titled 'C Pilgrim' in the Google Drive.
