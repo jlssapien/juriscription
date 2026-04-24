@@ -1,4 +1,1068 @@
 ---
-// Redirect to the drug database
-return Astro.redirect("/drugs", 302);
+import Layout from "../layouts/Layout.astro";
+import Disclaimer from "../components/Disclaimer.astro";
 ---
+
+<Layout title="Drug Database">
+  <Disclaimer />
+  <nav class="top-nav">
+    <div class="nav-left">
+      <a href="/" class="site-name">JURISCRIPTION</a>
+      <a href="/" class="nav-link active">MAIN DATASET</a>
+      <a href="/fda-to-mhra" class="nav-link" data-nav-tip="This sheet matches each drug in the FDA dataset to the closest drug (based on ingredients and dosage) in the MHRA dataset.">FDA → MHRA</a>
+      <a href="/mhra-to-fda" class="nav-link" data-nav-tip="This sheet matches each drug in the MHRA dataset to the closest drug (based on ingredients and dosage) in the FDA dataset.">MHRA → FDA</a>
+      <span class="nav-sep">|</span>
+      <a href="/results" class="nav-link">RESULTS</a>
+      <a href="/methods" class="nav-link">METHODOLOGY</a>
+      <a href="/regulatory-map" class="nav-link">MAP</a>
+      <a href="/about" class="nav-link">ABOUT</a>
+    </div>
+  </nav>
+
+  <div class="toolbar">
+    <input
+      type="text"
+      id="search"
+      placeholder="Search by product name or ingredients"
+      autocomplete="off"
+    />
+    <div class="toolbar-right">
+      <div class="filters-dropdown" id="filters-dropdown">
+        <button class="filters-dropdown-btn" id="filters-dropdown-btn">Filters <span class="dropdown-arrow">▾</span></button>
+        <div class="filters-dropdown-menu" id="filters-dropdown-menu">
+          <div class="filter-section-header">
+            <span class="filter-section-label">Country</span>
+            <button class="filter-action-btn" id="country-select-all">Select all</button>
+            <button class="filter-action-btn" id="country-clear-all">Clear</button>
+          </div>
+          <div class="filter-option-list" id="country-filter-list"></div>
+          <div class="filter-section-header filter-section-sep">
+            <span class="filter-section-label">Route</span>
+            <button class="filter-action-btn" id="route-select-all">Select all</button>
+            <button class="filter-action-btn" id="route-clear-all">Clear</button>
+          </div>
+          <div class="filter-option-list" id="route-filter-list"></div>
+        </div>
+      </div>
+      <div class="region-buttons">
+        <button class="region-btn active" data-region="all">All</button>
+        <button class="region-btn" data-region="EU">EMA</button>
+        <button class="region-btn" data-region="US">FDA</button>
+        <button class="region-btn" data-region="UK">MHRA</button>
+      </div>
+      <span id="result-count" class="result-count"></span>
+    </div>
+  </div>
+
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading drug database...</p>
+  </div>
+
+  <div class="table-wrapper" id="table-wrapper" style="display:none">
+    <table>
+      <thead>
+        <tr>
+          <th class="col-product" data-sort="n" data-col-tip="The brand or trade name of the drug as registered with its regulatory authority.">Product<span class="sort-icon"> ↕</span></th>
+          <th data-sort="s" data-col-tip="The active pharmaceutical ingredient(s) (INN / generic name) contained in the product.">Ingredients<span class="sort-icon"> ↕</span></th>
+          <th class="col-strength" data-sort="d" data-col-tip="The dose or concentration of the active ingredient(s), e.g. 10 mg or 5 mg/mL.">Strength<span class="sort-icon"> ↕</span></th>
+          <th class="col-route" data-col-tip="The route of administration — how the drug is taken or applied, e.g. oral, topical, intravenous.">Route</th>
+          <th class="col-status" data-col-tip="The regulatory access category. Hover individual cells for a full definition of each status code.">Status</th>
+          <th data-col-tip="The marketing authorisation holder or applicant company responsible for this product.">Company</th>
+          <th class="col-region" data-col-tip="The regulatory region (FDA = US, MHRA = UK, EMA = EU). EU products also show the specific authorised countries.">Region / Countries</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+    <div id="scroll-sentinel" class="scroll-sentinel"></div>
+    <div id="load-more-indicator" class="load-more-indicator" style="display:none">
+      <div class="spinner"></div>
+    </div>
+    <div id="end-of-results" class="end-of-results" style="display:none">
+      End of results
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // Status code tooltip definitions
+  const STATUS_TIPS: Record<string, { title: string; desc: string }> = {
+    "POM": {
+      title: "Prescription Only Medicine",
+      desc: "Requires a valid prescription from an authorised prescriber. Can only be dispensed by a licensed pharmacist."
+    },
+    "GSL": {
+      title: "General Sales List",
+      desc: "Available without a pharmacist. Can be purchased outside a pharmacy (such as in a supermarket)."
+    },
+    "P": {
+      title: "Pharmacy Medicine",
+      desc: "Only sold in a registered pharmacy under a pharmacist's supervision. Does not require a prescription."
+    },
+    "RX": {
+      title: "Prescription Only",
+      desc: "Requires a valid prescription from a licensed prescriber."
+    },
+    "OTC": {
+      title: "Over the Counter",
+      desc: "Can be purchased without a prescription in pharmacies or supermarkets."
+    },
+    "DISCN": {
+      title: "Discontinued",
+      desc: "This product is no longer available on the market."
+    },
+    "NOT CONTROLLED": {
+      title: "Not Controlled",
+      desc: "Not subject to controlled substance scheduling or restrictions."
+    },
+  };
+
+  // Create tooltip element
+  const tooltip = document.createElement("div");
+  tooltip.className = "status-tooltip";
+  tooltip.style.display = "none";
+  document.body.appendChild(tooltip);
+
+  let tooltipTimeout: any = null;
+
+  function showTooltip(e: MouseEvent, code: string) {
+    const tip = STATUS_TIPS[code.trim().toUpperCase()];
+    if (!tip) return;
+    clearTimeout(tooltipTimeout);
+    tooltip.innerHTML = `<strong>${tip.title}</strong><br>${tip.desc}`;
+    tooltip.style.display = "block";
+    // Detect row background to invert tooltip
+    const cell = (e.target as HTMLElement).closest("td.col-status") as HTMLElement;
+    if (cell) {
+      const bg = getComputedStyle(cell).backgroundColor;
+      const isWhite = bg === "rgb(255, 255, 255)" || bg === "rgba(0, 0, 0, 0)";
+      tooltip.classList.toggle("tooltip-light", !isWhite);
+      tooltip.classList.toggle("tooltip-dark", isWhite);
+      positionTooltipAtCell(cell);
+    }
+  }
+
+  function positionTooltipAtCell(cell: HTMLElement) {
+    const rect = cell.getBoundingClientRect();
+    const pad = 4;
+    let x = rect.right + pad;
+    let y = rect.bottom + pad;
+    // Prevent overflow right — flip to left of cell
+    const tw = tooltip.offsetWidth;
+    if (x + tw > window.innerWidth - pad) {
+      x = rect.left - tw - pad;
+    }
+    // Prevent overflow bottom — flip above cell
+    const th = tooltip.offsetHeight;
+    if (y + th > window.innerHeight - pad) {
+      y = rect.top - th - pad;
+    }
+    tooltip.style.left = x + "px";
+    tooltip.style.top = y + "px";
+  }
+
+  function hideTooltip() {
+    clearTimeout(tooltipTimeout);
+    tooltipTimeout = setTimeout(() => {
+      tooltip.style.display = "none";
+    }, 100);
+  }
+
+  // Nav link tooltips
+  const navTooltip = document.createElement("div");
+  navTooltip.className = "status-tooltip tooltip-dark";
+  navTooltip.style.display = "none";
+  document.body.appendChild(navTooltip);
+
+  document.querySelectorAll(".nav-link[data-nav-tip]").forEach((link) => {
+    link.addEventListener("mouseenter", () => {
+      const tip = (link as HTMLElement).dataset.navTip;
+      if (!tip) return;
+      navTooltip.textContent = tip;
+      navTooltip.style.display = "block";
+      const rect = (link as HTMLElement).getBoundingClientRect();
+      const pad = 4;
+      let x = rect.left;
+      const y = rect.bottom + pad;
+      const tw = navTooltip.offsetWidth;
+      if (x + tw > window.innerWidth - pad) x = window.innerWidth - tw - pad;
+      navTooltip.style.left = x + "px";
+      navTooltip.style.top = y + "px";
+    });
+    link.addEventListener("mouseleave", () => {
+      navTooltip.style.display = "none";
+    });
+  });
+
+  // Column header tooltips
+  const colTooltip = document.createElement("div");
+  colTooltip.className = "col-tooltip";
+  colTooltip.style.display = "none";
+  document.body.appendChild(colTooltip);
+
+  document.querySelectorAll("th[data-col-tip]").forEach((th) => {
+    th.addEventListener("mouseenter", () => {
+      const tip = (th as HTMLElement).dataset.colTip;
+      if (!tip) return;
+      colTooltip.textContent = tip;
+      colTooltip.style.display = "block";
+      const rect = (th as HTMLElement).getBoundingClientRect();
+      const pad = 4;
+      let x = rect.left;
+      const y = rect.bottom + pad;
+      const tw = colTooltip.offsetWidth;
+      if (x + tw > window.innerWidth - pad) x = window.innerWidth - tw - pad;
+      colTooltip.style.left = x + "px";
+      colTooltip.style.top = y + "px";
+    });
+    th.addEventListener("mouseleave", () => {
+      colTooltip.style.display = "none";
+    });
+  });
+
+  // Event delegation for status cell hover
+  document.addEventListener("mouseover", (e) => {
+    const target = (e.target as HTMLElement).closest("td.col-status");
+    if (!target) return;
+    const code = (target as HTMLElement).textContent?.trim() || "";
+    if (code && code !== "—" && STATUS_TIPS[code.toUpperCase()]) {
+      showTooltip(e as MouseEvent, code);
+    }
+  });
+
+  document.addEventListener("mouseout", (e) => {
+    const target = (e.target as HTMLElement).closest("td.col-status");
+    if (target) hideTooltip();
+  });
+
+  const BATCH_SIZE = 100;
+  let allDrugs: any[] = [];
+  let filtered: any[] = [];
+  let renderedCount = 0;
+  let currentRegion = "all";
+  let currentSearch = "";
+  let sortField = "n";
+  let sortAsc = true;
+  let debounceTimer: any = null;
+  let loading = false;
+  let selectedCountries: Set<string> = new Set();
+  let selectedRoutes: Set<string> = new Set();
+
+  // DOM refs
+  const searchInput = document.getElementById("search") as HTMLInputElement;
+  const tableWrapper = document.getElementById("table-wrapper")!;
+  const tableBody = document.getElementById("table-body")!;
+  const loadingEl = document.getElementById("loading")!;
+  const resultCount = document.getElementById("result-count")!;
+  const regionBtns = document.querySelectorAll(".region-btn");
+  const sortHeaders = document.querySelectorAll("th[data-sort]");
+  const scrollSentinel = document.getElementById("scroll-sentinel")!;
+  const loadMoreIndicator = document.getElementById("load-more-indicator")!;
+  const endOfResults = document.getElementById("end-of-results")!;
+  const filtersDropdownBtn = document.getElementById("filters-dropdown-btn")!;
+  const filtersDropdownMenu = document.getElementById("filters-dropdown-menu")!;
+  const countryFilterList = document.getElementById("country-filter-list")!;
+  const countrySelectAll = document.getElementById("country-select-all")!;
+  const countryClearAll = document.getElementById("country-clear-all")!;
+  const routeFilterList = document.getElementById("route-filter-list")!;
+  const routeSelectAll = document.getElementById("route-select-all")!;
+  const routeClearAll = document.getElementById("route-clear-all")!;
+
+  // Measure actual nav + toolbar heights for fixed header + sticky thead
+  const navEl = document.querySelector(".top-nav") as HTMLElement;
+  const toolbarEl = document.querySelector(".toolbar") as HTMLElement;
+  function updateHeaderLayout() {
+    const navH = navEl.offsetHeight;
+    const toolbarH = toolbarEl.offsetHeight;
+    const totalH = navH + toolbarH;
+    // Position toolbar right below nav
+    toolbarEl.style.top = navH + "px";
+    // Push page content below the fixed header
+    document.body.style.paddingTop = totalH + "px";
+    // Sticky th rows sit right below the fixed header
+    document.querySelectorAll("thead th").forEach((th) => {
+      (th as HTMLElement).style.top = totalH + "px";
+    });
+  }
+  updateHeaderLayout();
+  window.addEventListener("resize", updateHeaderLayout);
+
+  // Intersection Observer for infinite scroll
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting && !loading && renderedCount < filtered.length) {
+        loadMore();
+      }
+    },
+    { rootMargin: "400px" }
+  );
+
+  // Fetch the index
+  fetch("/drugs-index.json")
+    .then((r) => r.json())
+    .then((data) => {
+      allDrugs = data;
+      buildFilters(data);
+      loadingEl.style.display = "none";
+      tableWrapper.style.display = "block";
+      updateHeaderLayout();
+      applyFilters();
+      observer.observe(scrollSentinel);
+    })
+    .catch((err) => {
+      loadingEl.innerHTML = `<p style="color:#C7262C">Failed to load drug database. Please refresh.</p>`;
+      console.error(err);
+    });
+
+  // Region filter buttons
+  regionBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      regionBtns.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentRegion = (btn as HTMLElement).dataset.region || "all";
+      tableWrapper.dataset.region = currentRegion;
+      applyFilters();
+    });
+  });
+
+  // Search input
+  searchInput.addEventListener("input", () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      currentSearch = searchInput.value.trim().toLowerCase();
+      applyFilters();
+    }, 150);
+  });
+
+  // Column sorting
+  sortHeaders.forEach((th) => {
+    th.addEventListener("click", () => {
+      const field = (th as HTMLElement).dataset.sort!;
+      if (sortField === field) {
+        sortAsc = !sortAsc;
+      } else {
+        sortField = field;
+        sortAsc = true;
+      }
+      sortHeaders.forEach((h) => {
+        const icon = h.querySelector(".sort-icon");
+        if (icon) {
+          if ((h as HTMLElement).dataset.sort === sortField) {
+            icon.textContent = sortAsc ? " ↑" : " ↓";
+          } else {
+            icon.textContent = " ↕";
+          }
+        }
+      });
+      applySort();
+      resetAndRender();
+    });
+  });
+
+  // --- Filters dropdown (Country + Route) ---
+  function buildFilters(data: any[]) {
+    // Build country list
+    const countrySet = new Set<string>();
+    for (const d of data) {
+      for (const c of (d.o || [])) countrySet.add(c);
+    }
+    countryFilterList.innerHTML = "";
+    for (const country of Array.from(countrySet).sort()) {
+      const label = document.createElement("label");
+      label.className = "filter-option";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.value = country;
+      cb.addEventListener("change", () => {
+        if (cb.checked) selectedCountries.add(country);
+        else selectedCountries.delete(country);
+        updateFiltersBtnLabel();
+        applyFilters();
+      });
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(" " + country));
+      countryFilterList.appendChild(label);
+    }
+
+    // Build route list from individual terms
+    const routeTermSet = new Set<string>();
+    for (const d of data) {
+      for (const term of (d.f || "").split(" | ")) {
+        const t = term.trim();
+        if (t) routeTermSet.add(t);
+      }
+    }
+    routeFilterList.innerHTML = "";
+    for (const route of Array.from(routeTermSet).sort()) {
+      const label = document.createElement("label");
+      label.className = "filter-option";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.value = route;
+      cb.addEventListener("change", () => {
+        if (cb.checked) selectedRoutes.add(route);
+        else selectedRoutes.delete(route);
+        updateFiltersBtnLabel();
+        applyFilters();
+      });
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(" " + route));
+      routeFilterList.appendChild(label);
+    }
+  }
+
+  function updateFiltersBtnLabel() {
+    const n = selectedCountries.size + selectedRoutes.size;
+    const arrow = '<span class="dropdown-arrow">▾</span>';
+    if (n === 0) {
+      filtersDropdownBtn.innerHTML = `Filters ${arrow}`;
+    } else {
+      filtersDropdownBtn.innerHTML = `Filters (${n}) ${arrow}`;
+    }
+  }
+
+  // Toggle dropdown
+  filtersDropdownBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = filtersDropdownMenu.classList.toggle("open");
+    if (isOpen) updateHeaderLayout();
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!(e.target as HTMLElement).closest("#filters-dropdown")) {
+      filtersDropdownMenu.classList.remove("open");
+    }
+  });
+
+  // Country select all / clear
+  countrySelectAll.addEventListener("click", () => {
+    countryFilterList.querySelectorAll("input[type=checkbox]").forEach((cb: any) => {
+      cb.checked = true;
+      selectedCountries.add(cb.value);
+    });
+    updateFiltersBtnLabel();
+    applyFilters();
+  });
+
+  countryClearAll.addEventListener("click", () => {
+    countryFilterList.querySelectorAll("input[type=checkbox]").forEach((cb: any) => {
+      cb.checked = false;
+    });
+    selectedCountries.clear();
+    updateFiltersBtnLabel();
+    applyFilters();
+  });
+
+  // Route select all / clear
+  routeSelectAll.addEventListener("click", () => {
+    routeFilterList.querySelectorAll("input[type=checkbox]").forEach((cb: any) => {
+      cb.checked = true;
+      selectedRoutes.add(cb.value);
+    });
+    updateFiltersBtnLabel();
+    applyFilters();
+  });
+
+  routeClearAll.addEventListener("click", () => {
+    routeFilterList.querySelectorAll("input[type=checkbox]").forEach((cb: any) => {
+      cb.checked = false;
+    });
+    selectedRoutes.clear();
+    updateFiltersBtnLabel();
+    applyFilters();
+  });
+
+  function applyFilters() {
+    const query = currentSearch;
+    const region = currentRegion;
+    const hasCountryFilter = selectedCountries.size > 0;
+    const hasRouteFilter = selectedRoutes.size > 0;
+
+    filtered = allDrugs.filter((drug: any) => {
+      if (region !== "all" && drug.r !== region) return false;
+      if (hasCountryFilter) {
+        const countries: string[] = drug.o || [];
+        if (!countries.some(c => selectedCountries.has(c))) return false;
+      }
+      if (hasRouteFilter) {
+        const routeTerms = (drug.f || "").split(" | ").map((t: string) => t.trim());
+        if (!routeTerms.some((t: string) => selectedRoutes.has(t))) return false;
+      }
+      if (query) {
+        const name = (drug.n || "").toLowerCase();
+        const subs = (drug.s || []).join(" ").toLowerCase();
+        if (!name.includes(query) && !subs.includes(query)) return false;
+      }
+      return true;
+    });
+
+    applySort();
+    resetAndRender();
+  }
+
+  function applySort() {
+    filtered.sort((a: any, b: any) => {
+      let valA: string, valB: string;
+      if (sortField === "s") {
+        valA = (a.s || []).join(", ").toLowerCase();
+        valB = (b.s || []).join(", ").toLowerCase();
+      } else {
+        valA = (a[sortField] || "").toLowerCase();
+        valB = (b[sortField] || "").toLowerCase();
+      }
+      if (valA < valB) return sortAsc ? -1 : 1;
+      if (valA > valB) return sortAsc ? 1 : -1;
+      return 0;
+    });
+  }
+
+  function resetAndRender() {
+    renderedCount = 0;
+    tableBody.innerHTML = "";
+    endOfResults.style.display = "none";
+
+    const total = filtered.length.toLocaleString();
+    resultCount.textContent = total;
+
+    if (filtered.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No drugs found matching your search.</td></tr>`;
+      return;
+    }
+
+    loadMore();
+  }
+
+  function renderRegion(drug: any): string {
+    const region = drug.r || "";
+    const countries: string[] = drug.o || [];
+    if (region === "EU" && countries.length > 0) {
+      return countries.map(c => `<span class="badge badge-eu">${esc(c)}</span>`).join(" ");
+    }
+    const badgeClass =
+      region === "EU" ? "badge-eu" : region === "US" ? "badge-us" : region === "UK" ? "badge-uk" : "";
+    return `<span class="badge ${badgeClass}">${esc(region)}</span>`;
+  }
+
+  function loadMore() {
+    if (loading || renderedCount >= filtered.length) return;
+    loading = true;
+    loadMoreIndicator.style.display = "block";
+
+    // Use requestAnimationFrame to avoid blocking the UI
+    requestAnimationFrame(() => {
+      const end = Math.min(renderedCount + BATCH_SIZE, filtered.length);
+      const fragment = document.createDocumentFragment();
+
+      for (let i = renderedCount; i < end; i++) {
+        const drug = filtered[i];
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td class="col-product"><div class="product-name">${esc(drug.n || "")}</div></td>
+          <td>${(drug.s || []).map(esc).join(", ") || "&mdash;"}</td>
+          <td class="col-strength">${esc(drug.d || "") || "&mdash;"}</td>
+          <td class="col-route">${esc(drug.f || "") || "&mdash;"}</td>
+          <td class="col-status">${esc(drug.l || "") || "&mdash;"}</td>
+          <td>${esc(drug.c || "") || "&mdash;"}</td>
+          <td class="col-region">${renderRegion(drug)}</td>`;
+        fragment.appendChild(tr);
+      }
+
+      tableBody.appendChild(fragment);
+      renderedCount = end;
+      loading = false;
+      loadMoreIndicator.style.display = "none";
+
+      if (renderedCount >= filtered.length) {
+        endOfResults.style.display = "block";
+      }
+    });
+  }
+
+  function esc(str: string): string {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+</script>
+
+<style is:global>
+  /* ===== Top Navigation ===== */
+  .top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #ccc;
+    background: white;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 120;
+  }
+
+  .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .site-name {
+    font-weight: 700;
+    border: 1px solid #333;
+    padding: 0.15rem 0.5rem;
+    color: var(--color-black);
+    text-decoration: none;
+  }
+
+  .nav-link {
+    color: var(--color-black);
+    text-decoration: none;
+  }
+
+  .nav-link.active {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .nav-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ===== Toolbar (search + filters) ===== */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid #ccc;
+    background: white;
+    position: fixed;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    z-index: 115;
+  }
+
+  .toolbar input {
+    flex: 1;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid #ccc;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    background: white;
+    outline: none;
+  }
+
+  .toolbar input:focus {
+    border-color: var(--color-accent);
+    outline: 2px solid var(--color-accent-light);
+  }
+
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+  }
+
+  .region-buttons {
+    display: flex;
+    gap: 0;
+  }
+
+  .region-btn {
+    padding: 0.25rem 0.6rem;
+    border: 1px solid #ccc;
+    background: white;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    margin-left: -1px;
+  }
+
+  .region-btn:first-child {
+    margin-left: 0;
+  }
+
+  .region-btn:hover {
+    background: #eee;
+  }
+
+  .region-btn.active {
+    background: var(--color-accent);
+    color: white;
+    border-color: var(--color-accent);
+  }
+
+  .result-count {
+    font-size: 0.8rem;
+    color: #999;
+    white-space: nowrap;
+  }
+
+  /* ===== Filters Dropdown ===== */
+  .filters-dropdown {
+    position: relative;
+  }
+
+  .filters-dropdown-btn {
+    padding: 0.25rem 0.6rem;
+    border: 1px solid #ccc;
+    background: white;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .filters-dropdown-btn:hover {
+    background: #eee;
+  }
+
+  .dropdown-arrow {
+    font-size: 0.7rem;
+    color: #999;
+  }
+
+  .filters-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background: white;
+    border: 1px solid #ccc;
+    z-index: 150;
+    min-width: 260px;
+    max-height: 480px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+
+  .filters-dropdown-menu.open {
+    display: block;
+  }
+
+  .filter-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid #ccc;
+    background: white;
+  }
+
+  .filter-section-sep {
+    border-top: 1px solid #ccc;
+  }
+
+  .filter-section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    flex: 1;
+  }
+
+  .filter-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: #666;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .filter-action-btn:hover {
+    color: var(--color-black);
+  }
+
+  .filter-option-list {
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  .filter-option {
+    display: block;
+    padding: 0.3rem 0.6rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .filter-option:hover {
+    background: #f0f0f0;
+  }
+
+  .filter-option input[type="checkbox"] {
+    margin-right: 0.4rem;
+    vertical-align: middle;
+  }
+
+  /* ===== Loading ===== */
+  .loading {
+    text-align: center;
+    padding: 4rem 0;
+    font-family: var(--font-mono);
+    color: var(--color-black);
+  }
+
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #ddd;
+    border-top-color: var(--color-black);
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ===== Data Table ===== */
+  .table-wrapper {
+    /* No overflow-x here — it breaks sticky thead positioning */
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+
+  thead {
+    z-index: 98;
+  }
+
+  th {
+    position: sticky;
+    z-index: 98;
+    text-align: left;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid #ccc;
+    border-top: none;
+    background: white;
+    color: var(--color-accent);
+    font-weight: 700;
+    white-space: nowrap;
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  th:hover {
+    background: #f0f8f5;
+  }
+
+  .sort-icon {
+    color: #aaa;
+    font-size: 0.75rem;
+  }
+
+  td {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+    background: white;
+    vertical-align: top;
+  }
+
+  /* Product column — sticky left */
+  .col-product {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    min-width: 280px;
+    max-width: 380px;
+    background: white;
+    border-right: 2px solid #bbb;
+  }
+
+  thead .col-product {
+    z-index: 111;
+    background: white;
+  }
+
+  /* Hide Strength column for EU, Route column for UK, Status column for EU */
+  .table-wrapper[data-region="EU"] .col-strength,
+  .table-wrapper[data-region="EU"] .col-status,
+  .table-wrapper[data-region="UK"] .col-route {
+    display: none;
+  }
+
+  .product-name {
+    font-weight: 500;
+  }
+
+  /* Region column */
+  .col-region {
+    text-align: left;
+    min-width: 120px;
+    max-width: 260px;
+  }
+
+  .col-region .badge {
+    margin: 1px 2px 1px 0;
+    display: inline-block;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    border: 1px solid #ccc;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    font-family: var(--font-mono);
+  }
+
+  .badge-eu {
+    background: #e8f0fe;
+    color: #1a56db;
+    border-color: #a4c0f4;
+  }
+
+  .badge-us {
+    background: #fde8e8;
+    color: #c81e1e;
+    border-color: #f5a3a3;
+  }
+
+  .badge-uk {
+    background: #def7ec;
+    color: #046c4e;
+    border-color: #84e1bc;
+  }
+
+  /* Alternating row shading */
+  tbody tr:nth-child(even) td {
+    background: #fafafa;
+  }
+
+  tbody tr:nth-child(even) .col-product {
+    background: #fafafa;
+  }
+
+  tbody tr:hover td {
+    background: #f0f0f0;
+  }
+
+  tbody tr:hover .col-product {
+    background: #f0f0f0;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 0;
+    color: #999;
+    font-style: italic;
+  }
+
+  /* ===== Infinite Scroll ===== */
+  .scroll-sentinel {
+    height: 1px;
+  }
+
+  .load-more-indicator {
+    padding: 2rem 0;
+    text-align: center;
+  }
+
+  .end-of-results {
+    text-align: center;
+    padding: 1.5rem 0;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: #999;
+    border-top: 1px solid #ccc;
+  }
+
+  /* ===== Status Tooltip ===== */
+  .status-tooltip {
+    position: fixed;
+    z-index: 200;
+    max-width: 300px;
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    pointer-events: none;
+    border: 1px solid #ccc;
+  }
+
+  .status-tooltip strong {
+    font-size: 0.85rem;
+    display: block;
+    margin-bottom: 0.15rem;
+  }
+
+  /* White cell → grey tooltip */
+  .status-tooltip.tooltip-dark {
+    background: white;
+    color: var(--color-black);
+  }
+
+  .status-tooltip.tooltip-dark strong {
+    color: var(--color-black);
+  }
+
+  /* Grey/shaded cell → white tooltip */
+  .status-tooltip.tooltip-light {
+    background: #fff;
+    color: var(--color-black);
+  }
+
+  .status-tooltip.tooltip-light strong {
+    color: var(--color-black);
+  }
+
+  td.col-status {
+    cursor: default;
+  }
+
+  /* ===== Column Header Tooltip ===== */
+  .col-tooltip {
+    position: fixed;
+    z-index: 200;
+    max-width: 320px;
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    pointer-events: none;
+    border: 1px solid #ccc;
+    background: white;
+    color: var(--color-black);
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .toolbar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+    }
+
+    .toolbar-right {
+      justify-content: space-between;
+    }
+
+    .col-product {
+      min-width: 200px;
+    }
+  }
+</style>
