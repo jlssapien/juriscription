@@ -44,11 +44,17 @@ These results should be interpreted with the following caveats in mind, not leas
 
 ## Interpretation caveats
 
-- **A legal status discrepancy does not necessarily mean patients have different access.** A drug classified POM in the UK may still be widely prescribed and easily obtained via a GP appointment. Conversely, an OTC drug in the US may be unaffordable without insurance. Legal classification is one dimension of access, not the whole picture.
+- **A legal status discrepancy does not necessarily mean patients have different access.** A drug classified POM in the UK may still be widely prescribed and easily obtained via a GP appointment. Conversely, an OTC drug in the US may be unaffordable without insurance. Pack-size limits, pharmacy stocking practices, and regional supply differences also vary independently of legal classification — UK ibuprofen, for instance, is typically sold in 16- or 32-tablet packs where US OTC ibuprofen is available in bottles of hundreds. Legal classification is one dimension of access, not the whole picture.
 - **The UK P (Pharmacy) classification is treated as "non-prescription" throughout.** While P drugs do not require a prescription, they do require a pharmacist to be present and may involve a consultation. This is a meaningfully different level of access than US OTC, where products can be bought from any shop shelf. Treating P as equivalent to OTC slightly overstates the accessibility gap.
-- **Some apparent discrepancies reflect formulation differences, not policy differences.** When a UK GSL tablet is matched to a US RX injection, the discrepancy is real in the data but misleading as a policy comparison. We have flagged the most prominent cases (e.g. paracetamol) but similar issues may exist elsewhere in the tables.
+- **Some apparent discrepancies reflect formulation differences, not policy differences.** When a UK GSL tablet is matched to a US RX injection, the discrepancy is real in the data but misleading as a policy comparison. Liquid suspension dose strings, for instance, encode a per-volume concentration (such as "100 mg/5 ml") that a reader scanning quickly may parse as a total dose; pediatric suspensions of ibuprofen and paracetamol can therefore appear in the tables paired with adult tablet entries of the same numerical value. We have flagged the most prominent cases (e.g. paracetamol) but similar issues may exist elsewhere in the tables.
 - **The "UK more accessible" and "US more accessible" labels describe the data, not a judgement.** Different countries make different regulatory decisions for different reasons, including differences in healthcare systems, prescribing cultures, and risk tolerances. Neither approach is inherently better.
 - **Medium confidence matches should be treated with more caution.** These pairings share the same active ingredient but may differ in strength, and the strength differences can sometimes mean the products are not truly comparable (e.g. a 5% topical cream matched to a 200 mg oral tablet of the same substance).
+
+## Reading the tables
+
+The site shows every product entry from the source registers without aggregation or ranking. One of the limitations of this approach is that typical entries and edge cases share equal visual weight. For instance, looking up ibuprofen in the UK surfaces over a hundred GSL or P (non-prescription) entries at 100 and 200 mg alongside a small number of POM (prescription) entries at the same doses. The POM rows are likely specialty or pediatric products, but the table does not distinguish these exceptions from the dominant rule for the entire catalogue of medications.
+
+Similarly, on the cross-jurisdiction match pages, for each product, one side is paired with every closely-matching product on the other side, so a single FDA product can appear in several consecutive rows alongside several MHRA equivalents. This is duplication of the source row across multiple match candidates, not duplication of the underlying data. A row showing the same drug at the same dose with different legal statuses on each side is the comparison the project is built to make.
 
 ## How to do better than us
 
@@ -190,6 +196,12 @@ The substances with strength-threshold discrepancies include: Amiodarone, Calciu
 
 At high matching confidence (identical ingredient set and identical dose), 68 dose pairings across 33 substances showed a legal-status difference between the two countries. After deduplicating branded generics, the tables below list the pairings, split by which direction the difference runs.
 
+The two tables are filtered to show one direction of difference each. A pairing where the UK product is non-prescription and the matched US product is prescription appears in the "UK More Accessible" table; the reverse appears in the "US More Accessible" table. Most substances at a given dose have only one UK classification, so they appear in at most one table.
+
+Some substances at a given dose have multiple UK classifications — different brands, different formulations, or different routes of administration may be regulated differently. Fexofenadine 180 mg, for example, is sold in the UK as both a P (pharmacy) product and a POM (prescription-only) product, depending on the brand. When that happens, the same substance and dose can produce pairings in both directions: the P version against US RX in one table, the POM version against US OTC in the other. Both rows are real entries in the data. They are not the same product, even though the substance and dose columns look identical.
+
+A row in either table therefore describes one specific pairing of one UK product against one US product. It does not describe the regulatory status for every product of that substance at that dose. Reading across both tables together gives the fuller picture of which substances have mixed UK statuses.
+
 ## UK More Accessible (44 dose pairings)
 
 *Available without prescription in the UK (Pharmacy or General Sale), but appears to require a prescription in the US based on these datasets.*
@@ -297,6 +309,8 @@ Some substances appear on both lists. They are more accessible in the UK at some
 # Legal Discrepancies: Medium Confidence
 
 At medium confidence (same active ingredient, similar but not identical strength), the broader net captures **809 dose pairings** across **127 substances**. Of these, **101 substances are new**: not found at high confidence. The tables below are summarised at substance level rather than listing all 809 dose pairings.
+
+The two-table construction described in the High Confidence section above also applies here: substances with mixed UK statuses at the same dose can appear in both the "UK More Accessible" and "US More Accessible" tables.
 
 ## UK More Accessible (80 substances)
 
