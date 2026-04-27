@@ -6,7 +6,7 @@ This document explains how the metadata in `dataset-metadata.md` was produced, s
 
 ## 1. Identify the Data Source
 
-The front page of the site (`/drugs`) fetches `frontier-2025/public/drugs-index.json` at runtime. To trace where that file comes from, read the build scripts:
+The drug database (`/drugs`) fetches `frontier-2025/public/drugs-index.json` at runtime. To trace where that file comes from, read the build scripts:
 
 - `scripts/build_search_index.py` — writes `drugs-index.json` from the four JSON data files
 - `scripts/convert_drugs.py` — writes `data/eu.json`, `data/us.json`, `data/uk.json` from the master CSV
