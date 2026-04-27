@@ -13,3 +13,5 @@ The team:
 Findings should not be interpreted as regulatory guidance or medical advice. 
 
 Arb wishes to thank the project's funders, [Emergent Ventures](https://www.mercatus.org/emergent-ventures), a grant program at the Mercatus Center supporting high-risk research projects.
+
+This project is released into the public domain under [Creative Commons CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/). No attribution is required, though citation back to Arb Research is appreciated.
